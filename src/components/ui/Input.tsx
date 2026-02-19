@@ -13,7 +13,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
     return (
       <div className="w-full">
-        {label && <Label htmlFor={inputId}>{label}</Label>}
+        {label && <label htmlFor={inputId}>{label}</label>}
         <input
           id={inputId}
           ref={ref}
