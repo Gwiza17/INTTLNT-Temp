@@ -29,12 +29,12 @@ export default function MiniIELTSAssessment() {
       <div className="bg-blue-50 p-6 rounded-lg text-center">
         <p className="text-lg text-gray-800">{result}</p>
         <div className="mt-4 flex justify-center gap-4">
-          <Link href="/ielts/assessment">
+          <link href="/ielts/assessment">
             <Button>Complete Full Assessment</Button>
-          </Link>
-          <Link href="/ielts/availability">
+          </link>
+          <link href="/ielts/availability">
             <Button variant="outline">Check Exam Availability</Button>
-          </Link>
+          </link>
         </div>
       </div>
     )

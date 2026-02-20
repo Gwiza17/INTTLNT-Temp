@@ -1,68 +1,112 @@
-'use client'
+import Link from 'next/link'
+import { Button } from '@/components/ui/Button'
+import PathwayMatrix from '@/components/marketing/PathwayMatrix'
+import MiniIELTSAssessment from '@/components/marketing/MiniIELTSAssessment'
+import HowItWorks4Steps from '@/components/marketing/HowItWorks4Steps'
+import Storyboard from '@/components/marketing/Storyboard'
+import PathwayCards from '@/components/marketing/PathwayCards'
+import ChannelPartnerTeaser from '@/components/marketing/ChannelPartnerTeaser'
 
-import { Button, Input, Card, CardContent, Modal, FileUpload, Select } from '@/components/ui'
-import { useState } from 'react'
-
-export default function Home() {
-  const [isModalOpen, setIsModalOpen] = useState(false)
-
+export default function HomePage() {
   return (
-    <main className="p-8 space-y-8">
-      <h1 className="text-3xl font-bold">INTTLNT Component Demo</h1>
-
-      <section className="space-y-4">
-        <h2 className="text-xl font-semibold">Buttons</h2>
-        <div className="flex gap-4">
-          <Button>Default</Button>
-          <Button variant="outline">Outline</Button>
-          <Button variant="ghost">Ghost</Button>
-          <Button variant="destructive">Destructive</Button>
-          <Button size="sm">Small</Button>
-          <Button size="lg">Large</Button>
+    <div className="bg-white">
+      {/* Hero */}
+      <section className="bg-gradient-to-b from-blue-50 to-white py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-4">
+            Move from "I want to migrate" to "I'm ready to go."
+          </h1>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
+            Inttlnt is a structured pathway platform that turns high-potential applicants into admissions-ready, funder-ready, and visa-ready candidates—starting with IELTS readiness and progressing through screening, funding, admissions, and visa milestones.
+          </p>
+          <div className="flex justify-center space-x-4">
+            <Link href="/ielts">
+              <Button size="lg">Check IELTS Readiness</Button>
+            </Link>
+            <Link href="/engineering">
+              <Button variant="outline" size="lg">Explore Live Pathway</Button>
+            </Link>
+          </div>
+          <div className="mt-8 flex justify-center gap-6 text-sm text-gray-500">
+            <span>✓ IELTS readiness + preparation</span>
+            <span>✓ Stage-gated eligibility screening</span>
+            <span>✓ Transparent dashboards</span>
+          </div>
         </div>
       </section>
 
-      <section className="space-y-4 max-w-md">
-        <h2 className="text-xl font-semibold">Input</h2>
-        <Input label="Name" placeholder="Enter your name" />
-        <Input label="Email" type="email" error="Invalid email" />
+      {/* Live Pathway Recruiting Now */}
+      <section className="py-12 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-green-50 p-6 rounded-lg border border-green-200">
+            <div className="inline-block bg-green-600 text-white text-xs px-2 py-1 rounded mb-2">LIVE — Recruiting Now</div>
+            <h2 className="text-2xl font-bold mb-2">Engineering Pathway: Masters → Canada (Ottawa)</h2>
+            <p className="mb-4">We are recruiting qualified 4-year engineering graduates now. If you meet the fast-track criteria below, apply today. If not, start with IELTS readiness and we'll route you into a nurture plan to reach the threshold quickly.</p>
+            <div className="grid md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <h3 className="font-semibold">Fast-track eligibility (apply now):</h3>
+                <ul className="list-disc pl-5 text-sm">
+                  <li>IELTS ≥ 7.0 overall (balanced modules)</li>
+                  <li>4-year engineering degree (verified)</li>
+                  <li>Strong academics (≥ 70% GPA equivalent)</li>
+                  <li>Financial capacity to commence the process</li>
+                </ul>
+              </div>
+              <div className="flex items-center space-x-4">
+                <Link href="/engineering">
+                  <Button>Apply Now — Engineering (Live)</Button>
+                </Link>
+                <Link href="/ielts">
+                  <Button variant="outline">Check IELTS Readiness</Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
-      <section className="space-y-4 max-w-md">
-        <h2 className="text-xl font-semibold">Select</h2>
-        <Select
-          label="Choose option"
-          options={[
-            { value: '1', label: 'Option 1' },
-            { value: '2', label: 'Option 2' },
-          ]}
-        />
+      {/* Mini IELTS Self-Assessment */}
+      <section className="py-12 bg-gray-50">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-2xl font-bold text-center mb-2">Get a quick IELTS readiness signal in under 3 minutes.</h2>
+          <p className="text-center text-gray-600 mb-6">Answer a few short questions to see whether you're likely ready to sit IELTS now—or whether you should prepare first.</p>
+          <MiniIELTSAssessment />
+        </div>
       </section>
 
-      <section className="space-y-4">
-        <h2 className="text-xl font-semibold">Card</h2>
-        <Card>
-          <CardContent>This is a card with some content.</CardContent>
-        </Card>
+      {/* How Inttlnt Works (4 steps) */}
+      <section className="py-12 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-2xl font-bold text-center mb-8">How Inttlnt Works</h2>
+          <HowItWorks4Steps />
+          <div className="text-center mt-8">
+            <Link href="/ielts">
+              <Button>Start with IELTS Readiness →</Button>
+            </Link>
+          </div>
+        </div>
       </section>
 
-      <section className="space-y-4">
-        <h2 className="text-xl font-semibold">File Upload</h2>
-        <FileUpload label="Upload document" accept=".pdf,.jpg" />
+      {/* Storyboard */}
+      <section className="py-12 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Storyboard />
+        </div>
       </section>
 
-      <section className="space-y-4">
-        <h2 className="text-xl font-semibold">Modal</h2>
-        <Button onClick={() => setIsModalOpen(true)}>Open Modal</Button>
-        <Modal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          title="Example Modal"
-          footer={<Button onClick={() => setIsModalOpen(false)}>Close</Button>}
-        >
-          <p>Modal content goes here.</p>
-        </Modal>
+      {/* Pathway Cards */}
+      <section className="py-12 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <PathwayCards />
+        </div>
       </section>
-    </main>
+
+      {/* Channel Partner Teaser */}
+      <section className="py-12 bg-gray-50">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <ChannelPartnerTeaser />
+        </div>
+      </section>
+    </div>
   )
 }

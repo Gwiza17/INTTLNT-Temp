@@ -23,14 +23,17 @@ const steps = [
 
 export default function HowItWorks4Steps() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+    <div className='grid grid-cols-1 md:grid-cols-4 gap-6'>
       {steps.map((step) => (
-        <div key={step.number} className="bg-white p-6 rounded-lg shadow-sm border">
-          <div className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold mb-4">
+        <div
+          key={step.number}
+          className='bg-white p-6 rounded-lg shadow-sm border'
+        >
+          <div className='w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold mb-4'>
             {step.number}
           </div>
-          <h3 className="text-lg font-semibold mb-2">{step.title}</h3>
-          <p className="text-gray-600">{step.description}</p>
+          <h3 className='text-lg font-semibold mb-2'>{step.title}</h3>
+          <p className='text-gray-600'>{step.description}</p>
         </div>
       ))}
     </div>
