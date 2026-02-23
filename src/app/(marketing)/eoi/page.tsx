@@ -1,24 +1,36 @@
-'use client'
+import { Suspense } from 'react'
+import EOIForm from '@/components/forms/EOIForm'
 
-import { useSearchParams } from 'next/navigation'
-import { Button } from '@/components/ui/Button'
+interface EOIPageProps {
+  searchParams?: {
+    discipline?: string | string[]
+    destination?: string | string[]
+  }
+}
 
-export default function EOIPage() {
-  const searchParams = useSearchParams()
-  const discipline = searchParams.get('discipline')
-  const destination = searchParams.get('destination')
+export default function EOIPage({ searchParams }: EOIPageProps) {
+  const discipline =
+    typeof searchParams?.discipline === 'string'
+      ? searchParams.discipline
+      : undefined
+
+  const destination =
+    typeof searchParams?.destination === 'string'
+      ? searchParams.destination
+      : undefined
+
+  const initialPathway =
+    discipline && destination ? { discipline, destination } : undefined
 
   return (
-    <div className='max-w-3xl mx-auto py-10 px-4'>
-      <h1 className='text-3xl font-bold mb-6'>Expression of Interest</h1>
-      {discipline && destination && (
-        <p className='mb-4 text-gray-600'>
-          Pathway: {discipline} → {destination}
-        </p>
-      )}
-      <p className='text-gray-600'>EOI form will be built in Sprint 2.</p>
-      {/* Placeholder – actual form later */}
-      <Button disabled>Submit (Coming Soon)</Button>
+    <div className='max-w-3xl mx-auto py-10 px-4 sm:px-6 lg:px-8'>
+      <h1 className='text-3xl font-bold mb-2'>Expression of Interest</h1>
+      <p className='text-gray-600 mb-6'>
+        Tell us about yourself – it takes about 5 minutes.
+      </p>
+      <Suspense fallback={<div>Loading form...</div>}>
+        <EOIForm initialPathway={initialPathway} />
+      </Suspense>
     </div>
   )
 }
