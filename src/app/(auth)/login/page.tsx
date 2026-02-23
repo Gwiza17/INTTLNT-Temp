@@ -1,15 +1,33 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
+import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import { Card, CardContent } from '@/components/ui/Card'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirect = searchParams.get('redirect') || '/dashboard'
   const supabase = createClient()
+
+  // Optional: check if user is already logged in, redirect to dashboard
+  useEffect(() => {
+    const checkUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (user) {
+        router.push(redirect)
+      }
+    }
+    checkUser()
+  }, [router, redirect, supabase])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -19,7 +37,8 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        // Pass the redirect URL as a query parameter to the callback
+        emailRedirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirect)}`,
       },
     })
 
@@ -32,38 +51,41 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Sign in to INTTLNT
-          </h2>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleLogin}>
-          <div className="rounded-md shadow-sm -space-y-px">
-            <input
-              type="email"
+    <div className='min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8'>
+      <Card className='w-full max-w-md'>
+        <CardContent className='p-8'>
+          <div className='text-center mb-6'>
+            <h2 className='text-3xl font-extrabold text-gray-900'>
+              Sign in to INTTLNT
+            </h2>
+            <p className='mt-2 text-sm text-gray-600'>
+              We'll send a magic link to your email.
+            </p>
+          </div>
+
+          <form className='space-y-6' onSubmit={handleLogin}>
+            <Input
+              label='Email address'
+              type='email'
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-              placeholder="Email address"
+              placeholder='you@example.com'
+              autoComplete='email'
             />
-          </div>
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-            >
+
+            <Button type='submit' className='w-full' disabled={loading}>
               {loading ? 'Sending...' : 'Send magic link'}
-            </button>
-          </div>
-          {message && (
-            <p className="text-center text-sm text-gray-600">{message}</p>
-          )}
-        </form>
-      </div>
+            </Button>
+
+            {message && (
+              <div className='mt-4 text-center text-sm text-gray-600 bg-blue-50 p-3 rounded'>
+                {message}
+              </div>
+            )}
+          </form>
+        </CardContent>
+      </Card>
     </div>
   )
 }
