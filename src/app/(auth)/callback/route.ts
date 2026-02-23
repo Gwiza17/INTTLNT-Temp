@@ -7,33 +7,48 @@ export async function GET(request: Request) {
   const code = requestUrl.searchParams.get('code')
   const redirectTo = requestUrl.searchParams.get('redirect') || '/dashboard'
 
-  if (code) {
+  console.log('Callback route hit', { code, redirectTo })
+
+  if (!code) {
+    // If no code, redirect to home
+    return NextResponse.redirect(new URL('/', requestUrl.origin))
+  }
+
+  try {
     const cookieStore = cookies()
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
-          getAll() {
-            return cookieStore.getAll()
+          get(name: string) {
+            return cookieStore.get(name)?.value
           },
-          setAll(cookiesToSet) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) =>
-                cookieStore.set(name, value, options),
-              )
-            } catch {
-              // The `setAll` method was called from a Server Component.
-              // This can be ignored if you have middleware refreshing user sessions.
-            }
+          set(name: string, value: string, options: any) {
+            cookieStore.set(name, value, options)
+          },
+          remove(name: string, options: any) {
+            cookieStore.set(name, '', { ...options, maxAge: 0 })
           },
         },
       },
     )
 
-    await supabase.auth.exchangeCodeForSession(code)
-  }
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    if (error) {
+      console.error('Exchange error:', error)
+      // Redirect to login with error
+      return NextResponse.redirect(
+        new URL('/login?error=Unable to sign in', requestUrl.origin),
+      )
+    }
 
-  // Redirect to the originally requested page (or dashboard)
-  return NextResponse.redirect(new URL(redirectTo, requestUrl.origin))
+    // Success: redirect to intended page
+    return NextResponse.redirect(new URL(redirectTo, requestUrl.origin))
+  } catch (err) {
+    console.error('Unexpected error:', err)
+    return NextResponse.redirect(
+      new URL('/login?error=Unexpected error', requestUrl.origin),
+    )
+  }
 }

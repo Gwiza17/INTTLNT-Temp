@@ -35,7 +35,7 @@ export const eoiSchema = z.object({
   // Step 4: Financial & Partner
   fundingType: z.enum(['self', 'assisted']).optional(),
   proofOfFundsFile: z.instanceof(File).optional(),
-  applyingWithPartner: z.boolean().default(false),
+  applyingWithPartner: z.boolean(), // ✅ Required now
   partnerFullName: z.string().optional(),
   partnerEmail: z.string().email().optional().or(z.literal('')),
   partnerDocsFile: z.instanceof(File).optional(),

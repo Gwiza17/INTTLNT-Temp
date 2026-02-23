@@ -106,183 +106,208 @@ export default function EOIForm({ initialPathway }: EOIFormProps) {
   const prevStep = () => setStep((prev) => prev - 1)
 
   // Main submission handler
-  const onSubmit = async (data: EOIFormData) => {
-    setIsSubmitting(true)
+const onSubmit = async (data: EOIFormData) => {
+  setIsSubmitting(true)
 
-    try {
-      // 1. Check if user is authenticated
-      const {
-        data: { user },
-        error: authError,
-      } = await supabase.auth.getUser()
-      if (authError || !user) {
-        // Redirect to login with return URL
-        router.push(`/login?redirect=${encodeURIComponent('/eoi')}`)
-        return
-      }
+  try {
+    // 1. Check if user is authenticated
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
+    if (authError || !user) {
+      router.push(`/login?redirect=${encodeURIComponent('/eoi')}`)
+      return
+    }
 
-      // 2. Upload files to Supabase Storage
-      const uploadFile = async (
-        file: File | null,
-        folder: string,
-      ): Promise<string | null> => {
-        if (!file) return null
-        const fileExt = file.name.split('.').pop()
-        const fileName = `${folder}/${Date.now()}.${fileExt}`
-        const { data, error } = await supabase.storage
-          .from('documents')
-          .upload(fileName, file)
-        if (error) throw new Error(`File upload failed: ${error.message}`)
-        return data.path
-      }
-
-      // Upload all files in parallel
-      const uploads = await Promise.all([
-        uploadFile(data.passportFile || null, `applicants/${user.id}/passport`),
-        uploadFile(data.degreeFile || null, `applicants/${user.id}/degree`),
-        uploadFile(
-          data.transcriptsFile || null,
-          `applicants/${user.id}/transcripts`,
-        ),
-        uploadFile(data.ieltsResultFile || null, `applicants/${user.id}/ielts`),
-        uploadFile(
-          data.proofOfFundsFile || null,
-          `applicants/${user.id}/funds`,
-        ),
-        uploadFile(
-          data.partnerDocsFile || null,
-          `applicants/${user.id}/partner`,
-        ),
-      ])
-
-      const [
-        passportPath,
-        degreePath,
-        transcriptsPath,
-        ieltsResultPath,
-        proofOfFundsPath,
-        partnerDocsPath,
-      ] = uploads
-
-      // 3. Insert applicant record
-      const { data: applicant, error: applicantError } = await supabase
-        .from('applicants')
-        .insert({
-          user_id: user.id,
-          full_name: data.fullName,
-          email: data.email,
-          whatsapp: data.whatsapp || null,
-          country: data.countryOfResidence,
-          date_of_birth: data.dateOfBirth || null,
-          passport_url: passportPath,
-          degree_certificate_url: degreePath,
-          transcripts_url: transcriptsPath,
-          ielts_status: data.ieltsStatus || null,
-          ielts_score: data.ieltsOverall || null,
-          ielts_result_url: ieltsResultPath,
-          gpa: data.gpa ? parseFloat(data.gpa) : null,
-          work_experience_years: data.yearsOfExperience || null,
-          is_skilled_couple: data.applyingWithPartner,
-          partner_docs: partnerDocsPath ? { url: partnerDocsPath } : null, // store as JSON
-          proof_of_funds_url: proofOfFundsPath,
-          proof_of_funds_type:
-            data.fundingType === 'self'
-              ? 'bank_statement'
-              : 'conditional_offer',
-          pathway_discipline: data.pathwayDiscipline,
-          pathway_destination: data.pathwayDestination,
-          intake_preference: data.intakePreference,
-          referring_partner_code: data.referralCode || null,
-        })
-        .select()
-        .single()
-
-      if (applicantError)
-        throw new Error(`Applicant insert failed: ${applicantError.message}`)
-
-      // 4. Get the "EOI Submitted" stage ID
-      const { data: stage, error: stageError } = await supabase
-        .from('stages')
+    // 2. Validate referral code if provided
+    let partnerId = null
+    if (data.referralCode) {
+      const { data: partner, error: partnerError } = await supabase
+        .from('stakeholders')
         .select('id')
-        .eq('name', 'EOI Submitted')
-        .single()
+        .eq('partner_code', data.referralCode)
+        .eq('status', 'approved')
+        .maybeSingle()
 
-      if (stageError)
-        throw new Error(`Stage lookup failed: ${stageError.message}`)
+      if (partnerError) {
+        console.warn('Partner lookup error:', partnerError.message)
+      } else if (partner) {
+        partnerId = partner.id
+        console.log('Valid partner code:', data.referralCode)
+      } else {
+        console.log('Invalid or non‑approved partner code')
+      }
+    }
 
-      // 5. Insert case record
-      const { error: caseError } = await supabase.from('cases').insert({
+    // 3. Upload files
+    const uploadFile = async (
+      file: File | null,
+      folder: string,
+    ): Promise<string | null> => {
+      if (!file) return null
+      const fileExt = file.name.split('.').pop()
+      const fileName = `applicants/${user.id}/${folder}/${Date.now()}.${fileExt}`
+      const { data, error } = await supabase.storage
+        .from('documents')
+        .upload(fileName, file)
+      if (error) throw new Error(`File upload failed: ${error.message}`)
+      return data.path
+    }
+
+    const [
+      passportPath,
+      degreePath,
+      transcriptsPath,
+      ieltsResultPath,
+      proofOfFundsPath,
+      partnerDocsPath,
+    ] = await Promise.all([
+      uploadFile(data.passportFile || null, 'passport'),
+      uploadFile(data.degreeFile || null, 'degree'),
+      uploadFile(data.transcriptsFile || null, 'transcripts'),
+      uploadFile(data.ieltsResultFile || null, 'ielts'),
+      uploadFile(data.proofOfFundsFile || null, 'funds'),
+      uploadFile(data.partnerDocsFile || null, 'partner'),
+    ])
+
+    // 4. Insert applicant
+    const { data: applicant, error: applicantError } = await supabase
+      .from('applicants')
+      .insert({
+        user_id: user.id,
+        full_name: data.fullName,
+        email: data.email,
+        whatsapp: data.whatsapp || null,
+        country: data.countryOfResidence,
+        date_of_birth: data.dateOfBirth || null,
+        passport_url: passportPath,
+        degree_certificate_url: degreePath,
+        transcripts_url: transcriptsPath,
+        ielts_status: data.ieltsStatus || null,
+        ielts_score: data.ieltsOverall || null,
+        ielts_result_url: ieltsResultPath,
+        gpa: data.gpa ? parseFloat(data.gpa) : null,
+        work_experience_years: data.yearsOfExperience || null,
+        is_skilled_couple: data.applyingWithPartner,
+        partner_docs: partnerDocsPath ? { url: partnerDocsPath } : null,
+        proof_of_funds_url: proofOfFundsPath,
+        proof_of_funds_type:
+          data.fundingType === 'self' ? 'bank_statement' : 'conditional_offer',
+        pathway_discipline: data.pathwayDiscipline,
+        pathway_destination: data.pathwayDestination,
+        intake_preference: data.intakePreference,
+        referring_partner_code: data.referralCode || null,
+      })
+      .select()
+      .single()
+
+    if (applicantError)
+      throw new Error(`Applicant insert failed: ${applicantError.message}`)
+
+    // 5. Get "EOI Submitted" stage
+    const { data: stage, error: stageError } = await supabase
+      .from('stages')
+      .select('id')
+      .eq('name', 'EOI Submitted')
+      .single()
+
+    if (stageError)
+      throw new Error(`Stage lookup failed: ${stageError.message}`)
+
+    // 6. Insert case
+    const { data: newCase, error: caseError } = await supabase
+      .from('cases')
+      .insert({
         applicant_id: applicant.id,
         selected_pathway: `${data.pathwayDiscipline} → ${data.pathwayDestination}`,
         target_intake: data.intakePreference,
         current_stage_id: stage.id,
         stage_entered_at: new Date().toISOString(),
       })
+      .select('id')
+      .single()
 
-      if (caseError) throw new Error(`Case insert failed: ${caseError.message}`)
+    if (caseError) throw new Error(`Case insert failed: ${caseError.message}`)
 
-      // 6. Create document records for each uploaded file (optional, but good for tracking)
-      const documentInserts = []
-      if (passportPath)
-        documentInserts.push({
-          case_id: applicant.id,
-          document_type: 'passport',
-          file_path: passportPath,
-          owner_type: 'applicant',
+    // 7. If partnerId exists, create case assignment
+    if (partnerId) {
+      const { error: assignError } = await supabase
+        .from('case_assignments')
+        .insert({
+          case_id: newCase.id,
+          stakeholder_id: partnerId,
         })
-      if (degreePath)
-        documentInserts.push({
-          case_id: applicant.id,
-          document_type: 'degree',
-          file_path: degreePath,
-          owner_type: 'applicant',
-        })
-      if (transcriptsPath)
-        documentInserts.push({
-          case_id: applicant.id,
-          document_type: 'transcripts',
-          file_path: transcriptsPath,
-          owner_type: 'applicant',
-        })
-      if (ieltsResultPath)
-        documentInserts.push({
-          case_id: applicant.id,
-          document_type: 'ielts',
-          file_path: ieltsResultPath,
-          owner_type: 'applicant',
-        })
-      if (proofOfFundsPath)
-        documentInserts.push({
-          case_id: applicant.id,
-          document_type: 'proof_of_funds',
-          file_path: proofOfFundsPath,
-          owner_type: 'applicant',
-        })
-      if (partnerDocsPath)
-        documentInserts.push({
-          case_id: applicant.id,
-          document_type: 'partner_docs',
-          file_path: partnerDocsPath,
-          owner_type: 'partner',
-        })
-
-      if (documentInserts.length > 0) {
-        const { error: docError } = await supabase
-          .from('documents')
-          .insert(documentInserts)
-        if (docError)
-          console.warn('Document records not created:', docError.message) // non-critical
+      if (assignError) {
+        console.warn('Failed to assign case to partner:', assignError.message)
+        // Non‑fatal; continue
       }
-
-      // 7. Redirect to success page
-      router.push('/eoi/success')
-    } catch (error: any) {
-      console.error('EOI submission error:', error)
-      alert(`Submission failed: ${error.message}`)
-    } finally {
-      setIsSubmitting(false)
     }
+
+    // 8. Insert document records (optional)
+    const docInserts = []
+    if (passportPath)
+      docInserts.push({
+        case_id: newCase.id,
+        document_type: 'passport',
+        file_path: passportPath,
+        owner_type: 'applicant',
+      })
+    if (degreePath)
+      docInserts.push({
+        case_id: newCase.id,
+        document_type: 'degree',
+        file_path: degreePath,
+        owner_type: 'applicant',
+      })
+    if (transcriptsPath)
+      docInserts.push({
+        case_id: newCase.id,
+        document_type: 'transcripts',
+        file_path: transcriptsPath,
+        owner_type: 'applicant',
+      })
+    if (ieltsResultPath)
+      docInserts.push({
+        case_id: newCase.id,
+        document_type: 'ielts',
+        file_path: ieltsResultPath,
+        owner_type: 'applicant',
+      })
+    if (proofOfFundsPath)
+      docInserts.push({
+        case_id: newCase.id,
+        document_type: 'proof_of_funds',
+        file_path: proofOfFundsPath,
+        owner_type: 'applicant',
+      })
+    if (partnerDocsPath)
+      docInserts.push({
+        case_id: newCase.id,
+        document_type: 'partner_docs',
+        file_path: partnerDocsPath,
+        owner_type: 'partner',
+      })
+
+    if (docInserts.length > 0) {
+      await supabase
+        .from('documents')
+        .insert(docInserts)
+        .then(({ error }) => {
+          if (error)
+            console.warn('Document records not created:', error.message)
+        })
+    }
+
+    // 9. Redirect to success
+    router.push('/eoi/success')
+  } catch (error: any) {
+    console.error('EOI submission error:', error)
+    alert(`Submission failed: ${error.message}`)
+  } finally {
+    setIsSubmitting(false)
   }
+}
 
   return (
     <div className='bg-gray-50 p-6 rounded-lg'>
