@@ -1,15 +1,17 @@
 import { z } from 'zod'
 
-// Reusable file validation (optional, we'll handle file size/type in component)
-const fileSchema = z.any().optional()
-
 export const eoiSchema = z.object({
   // Step 1: Personal & Contact
   fullName: z.string().min(2, 'Full name is required'),
   email: z.string().email('Invalid email address'),
   whatsapp: z.string().optional(),
   countryOfResidence: z.string().min(1, 'Country is required'),
-  dateOfBirth: z.string().optional(), // could be date string
+  dateOfBirth: z.string().optional(),
+
+  // Step 1 Files
+  passportFile: z.instanceof(File).optional(),
+  degreeFile: z.instanceof(File).optional(),
+  transcriptsFile: z.instanceof(File).optional(),
 
   // Step 2: Education & Profession
   degreeTitle: z.string().min(1, 'Degree title is required'),
@@ -28,14 +30,15 @@ export const eoiSchema = z.object({
   ieltsSpeaking: z.number().optional(),
   ieltsTestDate: z.string().optional(),
   ieltsBookingDate: z.string().optional(),
+  ieltsResultFile: z.instanceof(File).optional(),
 
   // Step 4: Financial & Partner
   fundingType: z.enum(['self', 'assisted']).optional(),
-  proofOfFunds: fileSchema,
+  proofOfFundsFile: z.instanceof(File).optional(),
   applyingWithPartner: z.boolean().default(false),
   partnerFullName: z.string().optional(),
   partnerEmail: z.string().email().optional().or(z.literal('')),
-  // partner docs will be separate step later
+  partnerDocsFile: z.instanceof(File).optional(),
 
   // Pathway & Referral
   pathwayDiscipline: z.string(),
