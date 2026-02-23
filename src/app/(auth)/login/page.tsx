@@ -38,7 +38,7 @@ export default function LoginPage() {
       email,
       options: {
         // Pass the redirect URL as a query parameter to the callback
-        emailRedirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirect)}`,
+        emailRedirectTo: `${window.location.origin}/callback?redirect=${encodeURIComponent(redirect)}`,
       },
     })
 

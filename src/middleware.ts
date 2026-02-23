@@ -10,8 +10,9 @@ export async function middleware(request: NextRequest) {
 
   const url = request.nextUrl.clone()
   const path = url.pathname
+  console.log('middleware user:', user?.email, 'path:', path)
 
-  // Define public routes (accessible without login)
+  // Public routes that don't require authentication
   const publicRoutes = [
     '/',
     '/login',
@@ -20,20 +21,26 @@ export async function middleware(request: NextRequest) {
     '/nursing',
     '/ielts',
     '/partner',
-    '/eoi',
+    '/faq',
   ]
-  const isPublic = publicRoutes.some((route) => path.startsWith(route))
+  const isPublic = publicRoutes.some((route) =>
+    route === '/' ? path === '/' : path.startsWith(route),
+  )
 
-  // If user is not logged in and trying to access protected route, redirect to login
-  if (!user && !isPublic && path.startsWith('/dashboard')) {
+  // If user is not logged in and route is protected, redirect to login
+  // preserving the full path + query string so they return to the right place
+  if (!user && !isPublic) {
     url.pathname = '/login'
+    url.searchParams.set('redirect', path + request.nextUrl.search)
     return NextResponse.redirect(url)
   }
 
-  // If user is logged in and trying to access login page, redirect to dashboard
+  // If user is logged in and tries to access login, redirect to dashboard
   if (user && path === '/login') {
-    url.pathname = '/dashboard'
-    return NextResponse.redirect(url)
+    const dashboardUrl = request.nextUrl.clone()
+    dashboardUrl.pathname = '/dashboard'
+    dashboardUrl.search = ''
+    return NextResponse.redirect(dashboardUrl)
   }
 
   return response
