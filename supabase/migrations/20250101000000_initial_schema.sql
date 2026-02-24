@@ -206,3 +206,49 @@ CREATE TRIGGER update_applicants_updated_at BEFORE UPDATE ON applicants
 CREATE TRIGGER update_cases_updated_at BEFORE UPDATE ON cases
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 -- Add for other tables as needed
+
+
+--**Storage policy for the documents bucket:**
+
+CREATE POLICY "Users can upload their own documents"
+ON storage.objects
+FOR INSERT
+TO authenticated
+WITH CHECK (bucket_id = 'documents' AND (storage.foldername(name))[1] = 'applicants' AND (storage.foldername(name))[2] = auth.uid()::text);
+
+
+
+CREATE POLICY "Users can insert their own case"
+ON cases
+FOR INSERT
+TO authenticated
+WITH CHECK (
+  applicant_id IN (
+    SELECT id FROM applicants WHERE user_id = auth.uid()
+  )
+);
+
+CREATE POLICY "Users can view their own case"
+ON cases
+FOR SELECT
+TO authenticated
+USING (
+  applicant_id IN (
+    SELECT id FROM applicants WHERE user_id = auth.uid()
+  )
+);
+
+
+--**Documents table policies:**
+
+CREATE POLICY "Users can insert their own documents"
+ON documents
+FOR INSERT
+TO authenticated
+WITH CHECK (
+  case_id IN (
+    SELECT c.id FROM cases c
+    JOIN applicants a ON c.applicant_id = a.id
+    WHERE a.user_id = auth.uid()
+  )
+);
