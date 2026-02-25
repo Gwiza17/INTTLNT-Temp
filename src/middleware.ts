@@ -22,6 +22,8 @@ export async function middleware(request: NextRequest) {
     '/ielts',
     '/partner',
     '/faq',
+    '/eoi',
+    '/eoi/success',
   ]
   const isPublic = publicRoutes.some((route) =>
     route === '/' ? path === '/' : path.startsWith(route),
@@ -41,6 +43,56 @@ export async function middleware(request: NextRequest) {
     dashboardUrl.pathname = '/dashboard'
     dashboardUrl.search = ''
     return NextResponse.redirect(dashboardUrl)
+  }
+
+  // If user is logged in and at /dashboard, redirect to role-specific dashboard
+  if (user && path === '/dashboard') {
+    const { data: stakeholder } = await supabase
+      .from('stakeholders')
+      .select('roles, status')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    if (
+      stakeholder &&
+      stakeholder.status === 'approved' &&
+      stakeholder.roles.length > 0
+    ) {
+      const role = stakeholder.roles[0]
+      url.pathname = `/dashboard/${role}`
+      return NextResponse.redirect(url)
+    }
+
+    // Then check applicant
+    const { data: applicant } = await supabase
+      .from('applicants')
+      .select('id')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    if (applicant) {
+      url.pathname = '/dashboard/applicant'
+      return NextResponse.redirect(url)
+    }
+
+    url.pathname = '/dashboard/pending'
+    return NextResponse.redirect(url)
+  }
+
+  // Protect admin routes: only allow users with admin role
+  if (user && path.startsWith('/dashboard/admin')) {
+    const { data: stakeholder } = await supabase
+      .from('stakeholders')
+      .select('roles')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    if (!stakeholder || !stakeholder.roles.includes('admin')) {
+      // Not an admin – redirect to /dashboard which will further redirect to their role
+      url.pathname = '/dashboard'
+      url.search = ''
+      return NextResponse.redirect(url)
+    }
   }
 
   return response
