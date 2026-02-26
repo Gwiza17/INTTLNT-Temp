@@ -9,6 +9,12 @@ export default async function AdminCasesPage({
 }) {
   const supabase = createClient()
 
+  // Fetch all stages for the filter dropdown
+  const { data: stages } = await supabase
+    .from('stages')
+    .select('id, name')
+    .order('order', { ascending: true })
+
   // Build query with filters
   let query = supabase
     .from('cases')
@@ -16,14 +22,17 @@ export default async function AdminCasesPage({
       `
       *,
       applicants (full_name, email),
-      stages!inner (name, default_sla_days)
+      stages (name, default_sla_days)
     `,
     )
     .order('created_at', { ascending: false })
 
-  // Apply stage filter if provided
+  // Apply stage filter using stage id lookup
   if (searchParams.stage) {
-    query = query.eq('stages.name', searchParams.stage)
+    const matchedStage = stages?.find((s) => s.name === searchParams.stage)
+    if (matchedStage) {
+      query = query.eq('current_stage_id', matchedStage.id)
+    }
   }
 
   // Apply intake filter if provided (partial match)
@@ -33,15 +42,13 @@ export default async function AdminCasesPage({
 
   const { data: cases, error } = await query
 
-  // Fetch all stages for the filter dropdown
-  const { data: stages } = await supabase
-    .from('stages')
-    .select('name')
-    .order('order', { ascending: true })
-
   if (error) {
-    console.error('Error fetching cases:', error)
-    return <div>Error loading cases</div>
+    console.error('Error fetching cases:', error.message)
+    return (
+      <div className='text-red-500 p-4'>
+        Error loading cases: {error.message}
+      </div>
+    )
   }
 
   return (
