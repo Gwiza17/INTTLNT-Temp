@@ -47,12 +47,15 @@ export async function middleware(request: NextRequest) {
 
   // If user is logged in and at /dashboard, redirect to role-specific dashboard
   if (user && path === '/dashboard') {
-    const { data: stakeholder } = await supabase
+    const { data: stakeholder, error } = await supabase // 👈 destructure error
       .from('stakeholders')
       .select('roles, status')
       .eq('user_id', user.id)
       .maybeSingle()
 
+    console.log('user.id:', user.id)
+    console.log('stakeholder:', JSON.stringify(stakeholder))
+    console.log('error:', JSON.stringify(error)) //
     if (
       stakeholder &&
       stakeholder.status === 'approved' &&

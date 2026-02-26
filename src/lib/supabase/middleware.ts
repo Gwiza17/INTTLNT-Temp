@@ -15,9 +15,17 @@ export function createClient(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            response.cookies.set(name, value, options)
+          // Must set on both request AND response so the session
+          // is available to the middleware query and downstream
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value),
+          )
+          response = NextResponse.next({
+            request: { headers: request.headers },
           })
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options),
+          )
         },
       },
     },
