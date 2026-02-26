@@ -37,6 +37,20 @@ export function StakeholderApprovalTable({
         .eq('id', id)
 
       if (error) throw error
+
+      // Log action
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (user) {
+        await supabase.from('audit_logs').insert({
+          user_id: user.id,
+          action: 'stakeholder_approved',
+          new_value: { stakeholder_id: id, status: 'approved' },
+        })
+      }
+
       router.refresh()
     } catch (error) {
       console.error('Error approving stakeholder:', error)
@@ -55,6 +69,20 @@ export function StakeholderApprovalTable({
         .eq('id', id)
 
       if (error) throw error
+
+      // Log action
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (user) {
+        await supabase.from('audit_logs').insert({
+          user_id: user.id,
+          action: 'stakeholder_rejected',
+          new_value: { stakeholder_id: id, status: 'suspended' },
+        })
+      }
+
       router.refresh()
     } catch (error) {
       console.error('Error rejecting stakeholder:', error)
@@ -97,7 +125,8 @@ export function StakeholderApprovalTable({
                         </p>
                       )}
                       <p className='text-xs text-gray-400 mt-2'>
-                        Requested: {new Date(s.created_at).toLocaleDateString()}
+                        Requested:{' '}
+                        {new Date(s.created_at).toLocaleDateString()}
                       </p>
                     </div>
                     <div className='flex space-x-2'>
@@ -126,7 +155,9 @@ export function StakeholderApprovalTable({
       {/* Other Stakeholders Section */}
       {others.length > 0 && (
         <div>
-          <h2 className='text-xl font-semibold mb-4'>Other Stakeholders</h2>
+          <h2 className='text-xl font-semibold mb-4'>
+            Other Stakeholders
+          </h2>
           <div className='bg-white rounded-lg shadow overflow-x-auto'>
             <table className='min-w-full divide-y divide-gray-200'>
               <thead className='bg-gray-50'>
@@ -151,8 +182,12 @@ export function StakeholderApprovalTable({
               <tbody className='bg-white divide-y divide-gray-200'>
                 {others.map((s) => (
                   <tr key={s.id}>
-                    <td className='px-6 py-4 whitespace-nowrap'>{s.name}</td>
-                    <td className='px-6 py-4 whitespace-nowrap'>{s.email}</td>
+                    <td className='px-6 py-4 whitespace-nowrap'>
+                      {s.name}
+                    </td>
+                    <td className='px-6 py-4 whitespace-nowrap'>
+                      {s.email}
+                    </td>
                     <td className='px-6 py-4 whitespace-nowrap'>
                       {s.org || '—'}
                     </td>
@@ -165,8 +200,8 @@ export function StakeholderApprovalTable({
                           s.status === 'approved'
                             ? 'bg-green-100 text-green-800'
                             : s.status === 'suspended'
-                              ? 'bg-red-100 text-red-800'
-                              : 'bg-yellow-100 text-yellow-800'
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-yellow-100 text-yellow-800'
                         }`}
                       >
                         {s.status}
