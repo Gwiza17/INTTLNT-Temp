@@ -1,7 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
-
 export async function POST(request: Request) {
   const cookieStore = cookies()
   const supabase = createServerClient(
@@ -17,13 +16,22 @@ export async function POST(request: Request) {
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options),
             )
-          } catch {
-            // ignore
-          }
+          } catch {}
         },
       },
     },
   )
+
   await supabase.auth.signOut()
-  return NextResponse.redirect(new URL('/', request.url))
+
+  const response = NextResponse.redirect(new URL('/', request.url))
+
+  // Clear the auth cookies on the response itself
+  cookieStore.getAll().forEach((cookie) => {
+    if (cookie.name.includes('auth-token') || cookie.name.includes('sb-')) {
+      response.cookies.delete(cookie.name)
+    }
+  })
+
+  return response
 }

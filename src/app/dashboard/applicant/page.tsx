@@ -28,11 +28,6 @@ export default async function ApplicantDashboard() {
     <div className='max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8'>
       <div className='flex justify-between items-center mb-8'>
         <h1 className='text-3xl font-bold'>Applicant Dashboard</h1>
-        <form action='/auth/signout' method='post'>
-          <Button type='submit' variant='outline'>
-            Sign out
-          </Button>
-        </form>
       </div>
 
       {!applicant ? (
