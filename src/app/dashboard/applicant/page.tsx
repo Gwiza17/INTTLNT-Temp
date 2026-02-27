@@ -1,7 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { Button } from '@/components/ui/Button'
 import Link from 'next/link'
+import { Button } from '@/components/ui/Button'
+import { Card, CardContent, CardHeader } from '@/components/ui/Card'
+import { ForecastBadge } from '@/components/cases/ForecastBadge'
+import { calculateDaysInStage } from '@/lib/utils/sla'
 
 export default async function ApplicantDashboard() {
   const supabase = createClient()
@@ -13,10 +16,18 @@ export default async function ApplicantDashboard() {
     redirect('/login')
   }
 
-  // Fetch applicant record
+  // Fetch applicant record with their case
   const { data: applicant, error } = await supabase
     .from('applicants')
-    .select('*, cases(*)')
+    .select(
+      `
+      *,
+      cases (
+        *,
+        stages (name, default_sla_days)
+      )
+    `,
+    )
     .eq('user_id', user.id)
     .maybeSingle()
 
@@ -24,68 +35,124 @@ export default async function ApplicantDashboard() {
     console.error('Error fetching applicant:', error)
   }
 
+  // If no applicant record, prompt to submit EOI
+  if (!applicant) {
+    return (
+      <div className='max-w-4xl mx-auto py-12 px-4'>
+        <Card>
+          <CardContent className='p-8 text-center'>
+            <h1 className='text-2xl font-bold mb-4'>
+              Welcome to your dashboard
+            </h1>
+            <p className='text-gray-600 mb-6'>
+              You haven't submitted an Expression of Interest yet.
+            </p>
+            <Link href='/eoi'>
+              <Button>Start EOI</Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  const caseData = applicant.cases?.[0] // assuming one case per applicant for MVP
+
   return (
-    <div className='max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8'>
+    <div className='max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8'>
+      {/* Header with sign out */}
       <div className='flex justify-between items-center mb-8'>
-        <h1 className='text-3xl font-bold'>Applicant Dashboard</h1>
+        <h1 className='text-3xl font-bold'>My Dashboard</h1>
+        <form action='/auth/signout' method='post'>
+          <Button type='submit' variant='outline'>
+            Sign out
+          </Button>
+        </form>
       </div>
 
-      {!applicant ? (
-        <div className='bg-yellow-50 p-6 rounded-lg border border-yellow-200'>
-          <p className='text-yellow-800'>You haven't submitted an EOI yet.</p>
-          <Link href='/eoi' className='mt-4 inline-block'>
-            <Button>Start Expression of Interest</Button>
-          </Link>
-        </div>
-      ) : (
-        <div className='space-y-6'>
-          <div className='bg-white p-6 rounded-lg shadow'>
-            <h2 className='text-xl font-semibold mb-4'>Your Profile</h2>
-            <p>
-              <span className='font-medium'>Name:</span> {applicant.full_name}
-            </p>
-            <p>
-              <span className='font-medium'>Email:</span> {applicant.email}
-            </p>
-            <p>
-              <span className='font-medium'>Country:</span> {applicant.country}
-            </p>
-          </div>
+      {/* Profile Summary */}
+      <div className='grid grid-cols-1 md:grid-cols-3 gap-6 mb-8'>
+        <Card>
+          <CardContent className='p-6'>
+            <p className='text-sm text-gray-500'>Name</p>
+            <p className='text-lg font-medium'>{applicant.full_name}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className='p-6'>
+            <p className='text-sm text-gray-500'>Email</p>
+            <p className='text-lg font-medium'>{applicant.email}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className='p-6'>
+            <p className='text-sm text-gray-500'>Country</p>
+            <p className='text-lg font-medium'>{applicant.country}</p>
+          </CardContent>
+        </Card>
+      </div>
 
-          {applicant.cases && applicant.cases.length > 0 ? (
-            <div className='bg-white p-6 rounded-lg shadow'>
-              <h2 className='text-xl font-semibold mb-4'>Your Case</h2>
-              {applicant.cases.map((caseItem: any) => (
-                <div
-                  key={caseItem.id}
-                  className='border-t pt-4 first:border-t-0 first:pt-0'
-                >
-                  <p>
-                    <span className='font-medium'>Pathway:</span>{' '}
-                    {caseItem.selected_pathway}
-                  </p>
-                  <p>
-                    <span className='font-medium'>Intake:</span>{' '}
-                    {caseItem.target_intake}
-                  </p>
-                  <p>
-                    <span className='font-medium'>Current Stage:</span>{' '}
-                    {caseItem.current_stage_id}
-                  </p>
-                  <p>
-                    <span className='font-medium'>Status:</span>{' '}
-                    {caseItem.forecast_status}
-                  </p>
-                </div>
-              ))}
+      {/* Case Summary */}
+      {caseData ? (
+        <Card>
+          <CardHeader>
+            <h2 className='text-xl font-semibold'>Your Application</h2>
+          </CardHeader>
+          <CardContent className='p-6'>
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+              <div>
+                <p className='text-sm text-gray-500'>Pathway</p>
+                <p className='font-medium'>{caseData.selected_pathway}</p>
+              </div>
+              <div>
+                <p className='text-sm text-gray-500'>Target Intake</p>
+                <p className='font-medium'>{caseData.target_intake}</p>
+              </div>
+              <div>
+                <p className='text-sm text-gray-500'>Current Stage</p>
+                <p className='font-medium'>{caseData.stages?.name}</p>
+              </div>
+              <div>
+                <p className='text-sm text-gray-500'>Days in Stage</p>
+                <p className='font-medium'>
+                  {calculateDaysInStage(caseData.stage_entered_at)}
+                </p>
+              </div>
+              <div>
+                <p className='text-sm text-gray-500'>Forecast</p>
+                <ForecastBadge status={caseData.forecast_status} />
+              </div>
+              <div>
+                <p className='text-sm text-gray-500'>Next Required Action</p>
+                <p className='font-medium text-blue-600'>
+                  {/* Placeholder – we'll add logic later */}
+                  Check document checklist
+                </p>
+              </div>
             </div>
-          ) : (
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardContent className='p-6'>
             <p className='text-gray-600'>
-              No case found. Please contact support.
+              No active case found. Please contact support.
             </p>
-          )}
-        </div>
+          </CardContent>
+        </Card>
       )}
+
+      {/* Document Checklist Placeholder */}
+      <div className='mt-8'>
+        <h2 className='text-xl font-semibold mb-4'>Document Checklist</h2>
+        <Card>
+          <CardContent className='p-6'>
+            <p className='text-gray-600'>
+              Document checklist will appear here.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
