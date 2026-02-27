@@ -4,6 +4,9 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardHeader } from '@/components/ui/Card'
 import { ForecastBadge } from '@/components/cases/ForecastBadge'
+import { DocumentChecklist } from '@/components/dashboard/applicant/DocumentChecklist'
+import { ContactPanel } from '@/components/dashboard/applicant/ContactPanel'
+import { getNextActionMessage } from '@/lib/utils/nextAction'
 import { calculateDaysInStage } from '@/lib/utils/sla'
 
 export default async function ApplicantDashboard() {
@@ -16,7 +19,7 @@ export default async function ApplicantDashboard() {
     redirect('/login')
   }
 
-  // Fetch applicant record with their case
+  // Fetch applicant with their case and stage
   const { data: applicant, error } = await supabase
     .from('applicants')
     .select(
@@ -24,7 +27,7 @@ export default async function ApplicantDashboard() {
       *,
       cases (
         *,
-        stages (name, default_sla_days)
+        stages (name, default_sla_days, required_artifacts)
       )
     `,
     )
@@ -35,7 +38,6 @@ export default async function ApplicantDashboard() {
     console.error('Error fetching applicant:', error)
   }
 
-  // If no applicant record, prompt to submit EOI
   if (!applicant) {
     return (
       <div className='max-w-4xl mx-auto py-12 px-4'>
@@ -56,11 +58,53 @@ export default async function ApplicantDashboard() {
     )
   }
 
-  const caseData = applicant.cases?.[0] // assuming one case per applicant for MVP
+  const caseData = applicant.cases?.[0]
+  if (!caseData) {
+    return (
+      <div className='max-w-4xl mx-auto py-12 px-4'>
+        <Card>
+          <CardContent className='p-8 text-center'>
+            <p className='text-gray-600'>
+              No active case found. Please contact support.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // Fetch owner info if stage_owner_user_id exists
+  let ownerData = null
+  if (caseData.stage_owner_user_id) {
+    const { data: stakeholder } = await supabase
+      .from('stakeholders')
+      .select('name, email, whatsapp')
+      .eq('user_id', caseData.stage_owner_user_id)
+      .maybeSingle()
+    ownerData = stakeholder
+  }
+
+  // Fetch documents for this case
+  const { data: documents } = await supabase
+    .from('documents')
+    .select('document_type')
+    .eq('case_id', caseData.id)
+
+  const uploadedDocTypes = documents?.map((d) => d.document_type) || []
+
+  // Get required artifacts from stage
+  const requiredArtifacts: string[] = caseData.stages?.required_artifacts || []
+
+  // Compute next action message
+  const nextAction = getNextActionMessage(
+    caseData.stages?.name || '',
+    requiredArtifacts,
+    uploadedDocTypes,
+  )
 
   return (
     <div className='max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8'>
-      {/* Header with sign out */}
+      {/* Header */}
       <div className='flex justify-between items-center mb-8'>
         <h1 className='text-3xl font-bold'>My Dashboard</h1>
         <form action='/auth/signout' method='post'>
@@ -92,66 +136,72 @@ export default async function ApplicantDashboard() {
         </Card>
       </div>
 
-      {/* Case Summary */}
-      {caseData ? (
-        <Card>
-          <CardHeader>
-            <h2 className='text-xl font-semibold'>Your Application</h2>
-          </CardHeader>
-          <CardContent className='p-6'>
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-              <div>
-                <p className='text-sm text-gray-500'>Pathway</p>
-                <p className='font-medium'>{caseData.selected_pathway}</p>
-              </div>
-              <div>
-                <p className='text-sm text-gray-500'>Target Intake</p>
-                <p className='font-medium'>{caseData.target_intake}</p>
-              </div>
-              <div>
-                <p className='text-sm text-gray-500'>Current Stage</p>
-                <p className='font-medium'>{caseData.stages?.name}</p>
-              </div>
-              <div>
-                <p className='text-sm text-gray-500'>Days in Stage</p>
-                <p className='font-medium'>
-                  {calculateDaysInStage(caseData.stage_entered_at)}
-                </p>
-              </div>
-              <div>
-                <p className='text-sm text-gray-500'>Forecast</p>
-                <ForecastBadge status={caseData.forecast_status} />
-              </div>
-              <div>
-                <p className='text-sm text-gray-500'>Next Required Action</p>
-                <p className='font-medium text-blue-600'>
-                  {/* Placeholder – we'll add logic later */}
-                  Check document checklist
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <Card>
-          <CardContent className='p-6'>
-            <p className='text-gray-600'>
-              No active case found. Please contact support.
-            </p>
-          </CardContent>
-        </Card>
-      )}
+      {/* Two-column layout for main content */}
+      <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
+        <div className='lg:col-span-2 space-y-6'>
+          {/* Next Action Banner */}
+          <Card className='border-l-4 border-blue-500'>
+            <CardContent className='p-6'>
+              <h2 className='text-sm font-semibold text-blue-600 uppercase tracking-wide'>
+                Next Required Action
+              </h2>
+              <p className='text-xl mt-1'>{nextAction}</p>
+            </CardContent>
+          </Card>
 
-      {/* Document Checklist Placeholder */}
+          {/* Case Summary */}
+          <Card>
+            <CardHeader>
+              <h2 className='text-xl font-semibold'>Your Application</h2>
+            </CardHeader>
+            <CardContent className='p-6'>
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                <div>
+                  <p className='text-sm text-gray-500'>Pathway</p>
+                  <p className='font-medium'>{caseData.selected_pathway}</p>
+                </div>
+                <div>
+                  <p className='text-sm text-gray-500'>Target Intake</p>
+                  <p className='font-medium'>{caseData.target_intake}</p>
+                </div>
+                <div>
+                  <p className='text-sm text-gray-500'>Current Stage</p>
+                  <p className='font-medium'>{caseData.stages?.name}</p>
+                </div>
+                <div>
+                  <p className='text-sm text-gray-500'>Days in Stage</p>
+                  <p className='font-medium'>
+                    {calculateDaysInStage(caseData.stage_entered_at)}
+                  </p>
+                </div>
+                <div>
+                  <p className='text-sm text-gray-500'>Forecast</p>
+                  <ForecastBadge status={caseData.forecast_status} />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right column – Contact Panel */}
+        <div className='space-y-6'>
+          <ContactPanel
+            ownerName={ownerData?.name}
+            ownerEmail={ownerData?.email}
+            ownerWhatsapp={ownerData?.whatsapp}
+            ownerRole={caseData.stage_owner_role}
+          />
+        </div>
+      </div>
+
+      {/* Document Checklist (full width) */}
       <div className='mt-8'>
         <h2 className='text-xl font-semibold mb-4'>Document Checklist</h2>
-        <Card>
-          <CardContent className='p-6'>
-            <p className='text-gray-600'>
-              Document checklist will appear here.
-            </p>
-          </CardContent>
-        </Card>
+        <DocumentChecklist
+          caseId={caseData.id}
+          requiredArtifacts={requiredArtifacts}
+          uploadedDocTypes={uploadedDocTypes}
+        />
       </div>
     </div>
   )
