@@ -52,6 +52,7 @@ export async function middleware(request: NextRequest) {
       .select('roles, status')
       .eq('user_id', user.id)
       .maybeSingle()
+    
 
     console.log('user.id:', user.id)
     console.log('stakeholder:', JSON.stringify(stakeholder))
