@@ -48,16 +48,18 @@ export function StageChanger({
       if (error) throw error
 
       // Log to audit table
-      await supabase.from('audit_logs').insert({
+      const { error: auditError } = await supabase.from('audit_logs').insert({
         case_id: caseId,
         user_id: (await supabase.auth.getUser()).data.user?.id,
         action: 'stage_changed',
+        old_value: { stage_id: currentStageId }, // also add old value!
         new_value: {
           stage_id: selectedStage,
           sla_due_at: slaDueAt.toISOString(),
         },
       })
 
+      if (auditError) console.error('Audit insert failed:', auditError)
       router.refresh()
     } catch (error) {
       console.error('Error changing stage:', error)
