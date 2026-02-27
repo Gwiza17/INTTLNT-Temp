@@ -30,7 +30,17 @@ export async function GET(request: Request) {
       },
     )
 
-    await supabase.auth.exchangeCodeForSession(code)
+    const {
+      data: { session },
+    } = await supabase.auth.exchangeCodeForSession(code)
+
+    if (session?.user) {
+      await supabase
+        .from('applicants')
+        .update({ user_id: session.user.id })
+        .eq('email', session.user.email)
+        .neq('user_id', session.user.id)
+    }
   }
 
   return NextResponse.redirect(new URL(redirectTo, requestUrl.origin))
