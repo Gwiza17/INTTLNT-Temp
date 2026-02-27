@@ -1,85 +1,96 @@
-export default async function ApplicantDashboardPage() {
-  // 🔹 Demo Data (replace with Supabase later)
-  const applicant = {
-    name: 'John Doe',
-    email: 'john@example.com',
-    status: 'Under Review',
-    applications: [
-      {
-        id: 'APP-001',
-        program: 'AI Research Fellowship',
-        submittedAt: '2026-02-10',
-        status: 'Under Review',
-      },
-      {
-        id: 'APP-002',
-        program: 'Startup Incubator 2026',
-        submittedAt: '2026-01-28',
-        status: 'Shortlisted',
-      },
-    ],
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
+import { Button } from '@/components/ui/Button'
+import Link from 'next/link'
+
+export default async function ApplicantDashboard() {
+  const supabase = createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect('/login')
+  }
+
+  // Fetch applicant record
+  const { data: applicant, error } = await supabase
+    .from('applicants')
+    .select('*, cases(*)')
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (error) {
+    console.error('Error fetching applicant:', error)
   }
 
   return (
-    <div className='max-w-7xl mx-auto px-6 py-10'>
-      {/* Header */}
-      <div className='mb-8'>
-        <h1 className='text-3xl font-bold text-gray-900'>
-          Applicant Dashboard
-        </h1>
-        <p className='text-gray-600 mt-2'>Welcome back, {applicant.name}</p>
+    <div className='max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8'>
+      <div className='flex justify-between items-center mb-8'>
+        <h1 className='text-3xl font-bold'>Applicant Dashboard</h1>
+        <form action='/auth/signout' method='post'>
+          <Button type='submit' variant='outline'>
+            Sign out
+          </Button>
+        </form>
       </div>
 
-      {/* Profile Card */}
-      <div className='bg-white rounded-xl shadow-sm p-6 mb-8'>
-        <h2 className='text-lg font-semibold mb-4'>Profile Information</h2>
-        <div className='space-y-2 text-sm text-gray-700'>
-          <p>
-            <span className='font-medium'>Email:</span> {applicant.email}
-          </p>
-          <p>
-            <span className='font-medium'>Current Status:</span>{' '}
-            <span className='inline-block px-3 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded-full'>
-              {applicant.status}
-            </span>
-          </p>
+      {!applicant ? (
+        <div className='bg-yellow-50 p-6 rounded-lg border border-yellow-200'>
+          <p className='text-yellow-800'>You haven't submitted an EOI yet.</p>
+          <Link href='/eoi' className='mt-4 inline-block'>
+            <Button>Start Expression of Interest</Button>
+          </Link>
         </div>
-      </div>
+      ) : (
+        <div className='space-y-6'>
+          <div className='bg-white p-6 rounded-lg shadow'>
+            <h2 className='text-xl font-semibold mb-4'>Your Profile</h2>
+            <p>
+              <span className='font-medium'>Name:</span> {applicant.full_name}
+            </p>
+            <p>
+              <span className='font-medium'>Email:</span> {applicant.email}
+            </p>
+            <p>
+              <span className='font-medium'>Country:</span> {applicant.country}
+            </p>
+          </div>
 
-      {/* Applications Table */}
-      <div className='bg-white rounded-xl shadow-sm p-6'>
-        <h2 className='text-lg font-semibold mb-4'>Your Applications</h2>
-
-        <div className='overflow-x-auto'>
-          <table className='min-w-full text-sm'>
-            <thead className='border-b text-left text-gray-500'>
-              <tr>
-                <th className='py-3 pr-6'>Application ID</th>
-                <th className='py-3 pr-6'>Program</th>
-                <th className='py-3 pr-6'>Submitted</th>
-                <th className='py-3'>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {applicant.applications.map((app) => (
-                <tr
-                  key={app.id}
-                  className='border-b last:border-none hover:bg-gray-50'
+          {applicant.cases && applicant.cases.length > 0 ? (
+            <div className='bg-white p-6 rounded-lg shadow'>
+              <h2 className='text-xl font-semibold mb-4'>Your Case</h2>
+              {applicant.cases.map((caseItem: any) => (
+                <div
+                  key={caseItem.id}
+                  className='border-t pt-4 first:border-t-0 first:pt-0'
                 >
-                  <td className='py-4 pr-6 font-medium'>{app.id}</td>
-                  <td className='py-4 pr-6'>{app.program}</td>
-                  <td className='py-4 pr-6'>{app.submittedAt}</td>
-                  <td className='py-4'>
-                    <span className='inline-block px-3 py-1 text-xs font-medium bg-green-100 text-green-700 rounded-full'>
-                      {app.status}
-                    </span>
-                  </td>
-                </tr>
+                  <p>
+                    <span className='font-medium'>Pathway:</span>{' '}
+                    {caseItem.selected_pathway}
+                  </p>
+                  <p>
+                    <span className='font-medium'>Intake:</span>{' '}
+                    {caseItem.target_intake}
+                  </p>
+                  <p>
+                    <span className='font-medium'>Current Stage:</span>{' '}
+                    {caseItem.current_stage_id}
+                  </p>
+                  <p>
+                    <span className='font-medium'>Status:</span>{' '}
+                    {caseItem.forecast_status}
+                  </p>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+          ) : (
+            <p className='text-gray-600'>
+              No case found. Please contact support.
+            </p>
+          )}
         </div>
-      </div>
+      )}
     </div>
   )
 }
