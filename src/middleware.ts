@@ -1,6 +1,15 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/middleware'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
+
+// Service role client — bypasses RLS, used only for routing decisions
+function getServiceClient() {
+  return createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  )
+}
 
 export async function middleware(request: NextRequest) {
   const { supabase, response } = createClient(request)
@@ -12,7 +21,6 @@ export async function middleware(request: NextRequest) {
   const path = url.pathname
   console.log('middleware user:', user?.email, 'path:', path)
 
-  // Public routes that don't require authentication
   const publicRoutes = [
     '/',
     '/login',
@@ -29,15 +37,12 @@ export async function middleware(request: NextRequest) {
     route === '/' ? path === '/' : path.startsWith(route),
   )
 
-  // If user is not logged in and route is protected, redirect to login
-  // preserving the full path + query string so they return to the right place
   if (!user && !isPublic) {
     url.pathname = '/login'
     url.searchParams.set('redirect', path + request.nextUrl.search)
     return NextResponse.redirect(url)
   }
 
-  // If user is logged in and tries to access login, redirect to dashboard
   if (user && path === '/login') {
     const dashboardUrl = request.nextUrl.clone()
     dashboardUrl.pathname = '/dashboard'
@@ -45,9 +50,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(dashboardUrl)
   }
 
-  // If user is logged in and at /dashboard, redirect to role-specific dashboard
   if (user && path === '/dashboard') {
-    const { data: stakeholder, error } = await supabase // 👈 destructure error
+    const db = getServiceClient()
+
+    const { data: stakeholder } = await db
       .from('stakeholders')
       .select('roles, status')
       .eq('user_id', user.id)
@@ -55,7 +61,7 @@ export async function middleware(request: NextRequest) {
 
     console.log('user.id:', user.id)
     console.log('stakeholder:', JSON.stringify(stakeholder))
-    console.log('error:', JSON.stringify(error)) //
+
     if (
       stakeholder &&
       stakeholder.status === 'approved' &&
@@ -66,12 +72,13 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(url)
     }
 
-    // Then check applicant
-    const { data: applicant } = await supabase
+    const { data: applicant } = await db
       .from('applicants')
       .select('id')
       .eq('user_id', user.id)
       .maybeSingle()
+
+    console.log('applicant:', JSON.stringify(applicant))
 
     if (applicant) {
       url.pathname = '/dashboard/applicant'
@@ -82,75 +89,93 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Protect admin routes: only allow users with admin role
+  // Role-based route protection — also use service client
   if (user && path.startsWith('/dashboard/admin')) {
-    const { data: stakeholder } = await supabase
+    const db = getServiceClient()
+    const { data: stakeholder } = await db
       .from('stakeholders')
       .select('roles')
       .eq('user_id', user.id)
       .maybeSingle()
 
     if (!stakeholder || !stakeholder.roles.includes('admin')) {
-      // Not an admin – redirect to /dashboard which will further redirect to their role
       url.pathname = '/dashboard'
       url.search = ''
       return NextResponse.redirect(url)
     }
   }
-  // protect the funder dashboard
 
-  // if (user && path.startsWith('/dashboard/funder')) {
-  //   const { data: stakeholder } = await supabase
-  //     .from('stakeholders')
-  //     .select('roles')
-  //     .eq('user_id', user.id)
-  //     .maybeSingle()
+  if (user && path.startsWith('/dashboard/funder')) {
+    const db = getServiceClient()
+    const { data: stakeholder } = await db
+      .from('stakeholders')
+      .select('roles')
+      .eq('user_id', user.id)
+      .maybeSingle()
 
-  //   if (!stakeholder || !stakeholder.roles.includes('funder')) {
-  //     url.pathname = '/dashboard'
-  //     url.search = ''
-  //     return NextResponse.redirect(url)
-  //   }
-  // }
+    if (!stakeholder || !stakeholder.roles.includes('funder')) {
+      url.pathname = '/dashboard'
+      url.search = ''
+      return NextResponse.redirect(url)
+    }
+  }
 
-  // protects the migration agent
-// if (user && path.startsWith('/dashboard/migration-agent')) {
-//   const { data: stakeholder } = await supabase
-//     .from('stakeholders')
-//     .select('roles')
-//     .eq('user_id', user.id)
-//     .maybeSingle()
+  if (user && path.startsWith('/dashboard/migration-agent')) {
+    const db = getServiceClient()
+    const { data: stakeholder } = await db
+      .from('stakeholders')
+      .select('roles')
+      .eq('user_id', user.id)
+      .maybeSingle()
 
-//   if (!stakeholder || !stakeholder.roles.includes('migration_agent')) {
-//     url.pathname = '/dashboard'
-//     return NextResponse.redirect(url)
-//   }
-// }
-// if (user && path.startsWith('/dashboard/education-provider')) {
-//   const { data: stakeholder } = await supabase
-//     .from('stakeholders')
-//     .select('roles')
-//     .eq('user_id', user.id)
-//     .maybeSingle()
+    if (!stakeholder || !stakeholder.roles.includes('migration_agent')) {
+      url.pathname = '/dashboard'
+      return NextResponse.redirect(url)
+    }
+  }
 
-//   if (!stakeholder || !stakeholder.roles.includes('education_provider')) {
-//     url.pathname = '/dashboard'
-//     return NextResponse.redirect(url)
-//   }
-// }
+  if (user && path.startsWith('/dashboard/education-provider')) {
+    const db = getServiceClient()
+    const { data: stakeholder } = await db
+      .from('stakeholders')
+      .select('roles')
+      .eq('user_id', user.id)
+      .maybeSingle()
 
-// if (user && path.startsWith('/dashboard/employer')) {
-//   const { data: stakeholder } = await supabase
-//     .from('stakeholders')
-//     .select('roles')
-//     .eq('user_id', user.id)
-//     .maybeSingle()
+    if (!stakeholder || !stakeholder.roles.includes('education_provider')) {
+      url.pathname = '/dashboard'
+      return NextResponse.redirect(url)
+    }
+  }
 
-//   if (!stakeholder || !stakeholder.roles.includes('employer')) {
-//     url.pathname = '/dashboard'
-//     return NextResponse.redirect(url)
-//   }
-// }
+  if (user && path.startsWith('/dashboard/employer')) {
+    const db = getServiceClient()
+    const { data: stakeholder } = await db
+      .from('stakeholders')
+      .select('roles')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    if (!stakeholder || !stakeholder.roles.includes('employer')) {
+      url.pathname = '/dashboard'
+      return NextResponse.redirect(url)
+    }
+  }
+
+  if (user && path.startsWith('/dashboard/channel-partner')) {
+    const db = getServiceClient()
+    const { data: stakeholder } = await db
+      .from('stakeholders')
+      .select('roles')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    if (!stakeholder || !stakeholder.roles.includes('channel_partner')) {
+      url.pathname = '/dashboard'
+      return NextResponse.redirect(url)
+    }
+  }
+
   return response
 }
 

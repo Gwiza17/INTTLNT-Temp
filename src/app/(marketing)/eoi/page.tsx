@@ -5,6 +5,9 @@ interface EOIPageProps {
   searchParams?: {
     discipline?: string | string[]
     destination?: string | string[]
+    code?: string | string[]
+    pathway?: string | string[]
+    market?: string | string[]
   }
 }
 
@@ -12,12 +15,19 @@ export default function EOIPage({ searchParams }: EOIPageProps) {
   const discipline =
     typeof searchParams?.discipline === 'string'
       ? searchParams.discipline
-      : undefined
+      : typeof searchParams?.pathway === 'string'
+        ? searchParams.pathway
+        : undefined
 
   const destination =
     typeof searchParams?.destination === 'string'
       ? searchParams.destination
-      : undefined
+      : typeof searchParams?.market === 'string'
+        ? searchParams.market
+        : undefined
+
+  const referralCode =
+    typeof searchParams?.code === 'string' ? searchParams.code : undefined
 
   const initialPathway =
     discipline && destination ? { discipline, destination } : undefined
@@ -29,7 +39,10 @@ export default function EOIPage({ searchParams }: EOIPageProps) {
         Tell us about yourself – it takes about 5 minutes.
       </p>
       <Suspense fallback={<div>Loading form...</div>}>
-        <EOIForm initialPathway={initialPathway} />
+        <EOIForm
+          initialPathway={initialPathway}
+          initialReferralCode={referralCode}
+        />
       </Suspense>
     </div>
   )

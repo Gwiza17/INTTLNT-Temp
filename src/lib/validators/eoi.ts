@@ -18,7 +18,8 @@ export const eoiSchema = z.object({
   institution: z.string().min(1, 'Institution is required'),
   graduationYear: z.string().optional(),
   gpa: z.string().optional(),
-  yearsOfExperience: z.number().optional(),
+  // FIX: was z.number() but the <Select> returns a string — changed to string
+  yearsOfExperience: z.string().optional(),
   currentOccupation: z.string().optional(),
 
   // Step 3: IELTS Status
@@ -35,7 +36,7 @@ export const eoiSchema = z.object({
   // Step 4: Financial & Partner
   fundingType: z.enum(['self', 'assisted']).optional(),
   proofOfFundsFile: z.instanceof(File).optional(),
-  applyingWithPartner: z.boolean(), // ✅ Required now
+  applyingWithPartner: z.boolean(),
   partnerFullName: z.string().optional(),
   partnerEmail: z.string().email().optional().or(z.literal('')),
   partnerDocsFile: z.instanceof(File).optional(),
