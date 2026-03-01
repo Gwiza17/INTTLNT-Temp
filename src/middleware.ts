@@ -52,7 +52,6 @@ export async function middleware(request: NextRequest) {
       .select('roles, status')
       .eq('user_id', user.id)
       .maybeSingle()
-    
 
     console.log('user.id:', user.id)
     console.log('stakeholder:', JSON.stringify(stakeholder))
@@ -98,7 +97,60 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(url)
     }
   }
+  // protect the funder dashboard
 
+  // if (user && path.startsWith('/dashboard/funder')) {
+  //   const { data: stakeholder } = await supabase
+  //     .from('stakeholders')
+  //     .select('roles')
+  //     .eq('user_id', user.id)
+  //     .maybeSingle()
+
+  //   if (!stakeholder || !stakeholder.roles.includes('funder')) {
+  //     url.pathname = '/dashboard'
+  //     url.search = ''
+  //     return NextResponse.redirect(url)
+  //   }
+  // }
+
+  // protects the migration agent
+// if (user && path.startsWith('/dashboard/migration-agent')) {
+//   const { data: stakeholder } = await supabase
+//     .from('stakeholders')
+//     .select('roles')
+//     .eq('user_id', user.id)
+//     .maybeSingle()
+
+//   if (!stakeholder || !stakeholder.roles.includes('migration_agent')) {
+//     url.pathname = '/dashboard'
+//     return NextResponse.redirect(url)
+//   }
+// }
+// if (user && path.startsWith('/dashboard/education-provider')) {
+//   const { data: stakeholder } = await supabase
+//     .from('stakeholders')
+//     .select('roles')
+//     .eq('user_id', user.id)
+//     .maybeSingle()
+
+//   if (!stakeholder || !stakeholder.roles.includes('education_provider')) {
+//     url.pathname = '/dashboard'
+//     return NextResponse.redirect(url)
+//   }
+// }
+
+// if (user && path.startsWith('/dashboard/employer')) {
+//   const { data: stakeholder } = await supabase
+//     .from('stakeholders')
+//     .select('roles')
+//     .eq('user_id', user.id)
+//     .maybeSingle()
+
+//   if (!stakeholder || !stakeholder.roles.includes('employer')) {
+//     url.pathname = '/dashboard'
+//     return NextResponse.redirect(url)
+//   }
+// }
   return response
 }
 

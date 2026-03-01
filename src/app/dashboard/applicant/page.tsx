@@ -6,8 +6,10 @@ import { Card, CardContent, CardHeader } from '@/components/ui/Card'
 import { ForecastBadge } from '@/components/cases/ForecastBadge'
 import { DocumentChecklist } from '@/components/dashboard/applicant/DocumentChecklist'
 import { ContactPanel } from '@/components/dashboard/applicant/ContactPanel'
+import { IELTSAvailabilityWidget } from '@/components/dashboard/applicant/IELTSAvailabilityWidget'
 import { getNextActionMessage } from '@/lib/utils/nextAction'
 import { calculateDaysInStage } from '@/lib/utils/sla'
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 
 export default async function ApplicantDashboard() {
   const supabase = createClient()
@@ -59,6 +61,7 @@ export default async function ApplicantDashboard() {
   }
 
   const caseData = applicant.cases?.[0]
+
   if (!caseData) {
     return (
       <div className='max-w-4xl mx-auto py-12 px-4'>
@@ -91,8 +94,6 @@ export default async function ApplicantDashboard() {
     .eq('case_id', caseData.id)
 
   const uploadedDocTypes = documents?.map((d) => d.document_type) || []
-
-  // Get required artifacts from stage
   const requiredArtifacts: string[] = caseData.stages?.required_artifacts || []
 
   // Compute next action message
@@ -104,105 +105,109 @@ export default async function ApplicantDashboard() {
 
   return (
     <div className='max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8'>
-      {/* Header */}
-      <div className='flex justify-between items-center mb-8'>
-        <h1 className='text-3xl font-bold'>My Dashboard</h1>
-        <form action='/auth/signout' method='post'>
-          <Button type='submit' variant='outline'>
-            Sign out
-          </Button>
-        </form>
-      </div>
+      <ErrorBoundary>
+        {/* Header */}
+        <div className='flex justify-between items-center mb-8'>
+          <h1 className='text-3xl font-bold'>My Dashboard</h1>
+        </div>
 
-      {/* Profile Summary */}
-      <div className='grid grid-cols-1 md:grid-cols-3 gap-6 mb-8'>
-        <Card>
-          <CardContent className='p-6'>
-            <p className='text-sm text-gray-500'>Name</p>
-            <p className='text-lg font-medium'>{applicant.full_name}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className='p-6'>
-            <p className='text-sm text-gray-500'>Email</p>
-            <p className='text-lg font-medium'>{applicant.email}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className='p-6'>
-            <p className='text-sm text-gray-500'>Country</p>
-            <p className='text-lg font-medium'>{applicant.country}</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Two-column layout for main content */}
-      <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
-        <div className='lg:col-span-2 space-y-6'>
-          {/* Next Action Banner */}
-          <Card className='border-l-4 border-blue-500'>
+        {/* Profile Summary */}
+        <div className='grid grid-cols-1 md:grid-cols-3 gap-6 mb-8'>
+          <Card>
             <CardContent className='p-6'>
-              <h2 className='text-sm font-semibold text-blue-600 uppercase tracking-wide'>
-                Next Required Action
-              </h2>
-              <p className='text-xl mt-1'>{nextAction}</p>
+              <p className='text-sm text-gray-500'>Name</p>
+              <p className='text-lg font-medium'>{applicant.full_name}</p>
             </CardContent>
           </Card>
-
-          {/* Case Summary */}
           <Card>
-            <CardHeader>
-              <h2 className='text-xl font-semibold'>Your Application</h2>
-            </CardHeader>
             <CardContent className='p-6'>
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-                <div>
-                  <p className='text-sm text-gray-500'>Pathway</p>
-                  <p className='font-medium'>{caseData.selected_pathway}</p>
-                </div>
-                <div>
-                  <p className='text-sm text-gray-500'>Target Intake</p>
-                  <p className='font-medium'>{caseData.target_intake}</p>
-                </div>
-                <div>
-                  <p className='text-sm text-gray-500'>Current Stage</p>
-                  <p className='font-medium'>{caseData.stages?.name}</p>
-                </div>
-                <div>
-                  <p className='text-sm text-gray-500'>Days in Stage</p>
-                  <p className='font-medium'>
-                    {calculateDaysInStage(caseData.stage_entered_at)}
-                  </p>
-                </div>
-                <div>
-                  <p className='text-sm text-gray-500'>Forecast</p>
-                  <ForecastBadge status={caseData.forecast_status} />
-                </div>
-              </div>
+              <p className='text-sm text-gray-500'>Email</p>
+              <p className='text-lg font-medium'>{applicant.email}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className='p-6'>
+              <p className='text-sm text-gray-500'>Country</p>
+              <p className='text-lg font-medium'>{applicant.country}</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Right column – Contact Panel */}
-        <div className='space-y-6'>
-          <ContactPanel
-            ownerName={ownerData?.name}
-            ownerEmail={ownerData?.email}
-            ownerWhatsapp={ownerData?.whatsapp}
-            ownerRole={caseData.stage_owner_role}
+        {/* Two-column layout */}
+        <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
+          <div className='lg:col-span-2 space-y-6'>
+            {/* Next Action Banner */}
+            <Card className='border-l-4 border-blue-500'>
+              <CardContent className='p-6'>
+                <h2 className='text-sm font-semibold text-blue-600 uppercase tracking-wide'>
+                  Next Required Action
+                </h2>
+                <p className='text-xl mt-1'>{nextAction}</p>
+              </CardContent>
+            </Card>
+
+            {/* Case Summary */}
+            <Card>
+              <CardHeader>
+                <h2 className='text-xl font-semibold'>Your Application</h2>
+              </CardHeader>
+              <CardContent className='p-6'>
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                  <div>
+                    <p className='text-sm text-gray-500'>Pathway</p>
+                    <p className='font-medium'>{caseData.selected_pathway}</p>
+                  </div>
+                  <div>
+                    <p className='text-sm text-gray-500'>Target Intake</p>
+                    <p className='font-medium'>
+                      {caseData.target_intake || 'Not set'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className='text-sm text-gray-500'>Current Stage</p>
+                    <p className='font-medium'>{caseData.stages?.name}</p>
+                  </div>
+                  <div>
+                    <p className='text-sm text-gray-500'>Days in Stage</p>
+                    <p className='font-medium'>
+                      {calculateDaysInStage(caseData.stage_entered_at)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className='text-sm text-gray-500'>Forecast</p>
+                    <ForecastBadge status={caseData.forecast_status} />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right column – Contact Panel */}
+          <div className='space-y-6'>
+            <ContactPanel
+              ownerName={ownerData?.name}
+              ownerEmail={ownerData?.email}
+              ownerWhatsapp={ownerData?.whatsapp}
+              ownerRole={caseData.stage_owner_role}
+            />
+          </div>
+        </div>
+
+        {/* Document Checklist */}
+        <div className='mt-8'>
+          <h2 className='text-xl font-semibold mb-4'>Document Checklist</h2>
+          <DocumentChecklist
+            caseId={caseData.id}
+            requiredArtifacts={requiredArtifacts}
+            uploadedDocTypes={uploadedDocTypes}
           />
         </div>
-      </div>
 
-      {/* Document Checklist (full width) */}
-      <div className='mt-8'>
-        <h2 className='text-xl font-semibold mb-4'>Document Checklist</h2>
-        <DocumentChecklist
-          caseId={caseData.id}
-          requiredArtifacts={requiredArtifacts}
-          uploadedDocTypes={uploadedDocTypes}
-        />
-      </div>
+        {/* IELTS Availability Widget */}
+        <div className='mt-8'>
+          <IELTSAvailabilityWidget />
+        </div>
+      </ErrorBoundary>
     </div>
   )
 }

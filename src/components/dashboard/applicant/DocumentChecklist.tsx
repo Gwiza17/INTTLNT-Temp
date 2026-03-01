@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import toast from 'react-hot-toast'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -16,25 +18,12 @@ export function DocumentChecklist({
   requiredArtifacts,
   uploadedDocTypes,
 }: DocumentChecklistProps) {
-  const [uploadingFor, setUploadingFor] = useState<string | null>(null)
+  const [uploading, setUploading] = useState<string | null>(null)
+  const router = useRouter()
   const supabase = createClient()
 
-  const docTypeNames: Record<string, string> = {
-    passport: 'Passport',
-    degree: 'Degree Certificate',
-    transcripts: 'Transcripts',
-    ielts: 'IELTS Result',
-    proof_of_funds: 'Proof of Funds',
-    partner_docs: 'Partner Documents',
-    other: 'Other',
-  }
-
-  const isUploaded = (docType: string) => {
-    return (uploadedDocTypes || []).includes(docType)
-  }
-
   const handleUpload = async (docType: string, file: File) => {
-    setUploadingFor(docType)
+    setUploading(docType)
     try {
       const {
         data: { user },
@@ -55,40 +44,49 @@ export function DocumentChecklist({
         document_type: docType,
         file_path: uploadData.path,
         owner_type: 'applicant',
-        verified_status: false,
       })
 
       if (dbError) throw dbError
 
+      toast.success(`${docType.replace(/_/g, ' ')} uploaded successfully`)
       window.location.reload()
     } catch (error) {
       console.error('Upload error:', error)
-      alert('Upload failed')
+      toast.error('Upload failed. Please try again.')
     } finally {
-      setUploadingFor(null)
+      setUploading(null)
     }
+  }
+
+  if (!requiredArtifacts.length) {
+    return (
+      <Card>
+        <CardContent className='p-6'>
+          <p className='text-gray-600'>No documents required at this stage.</p>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
     <div className='space-y-4'>
-      {requiredArtifacts.length === 0 ? (
-        <p className='text-gray-500'>No documents required at this stage.</p>
-      ) : (
-        requiredArtifacts.map((docType) => (
+      {requiredArtifacts.map((docType) => {
+        const isUploaded = uploadedDocTypes.includes(docType)
+        return (
           <Card key={docType}>
             <CardContent className='p-4 flex items-center justify-between'>
               <div>
-                <p className='font-medium'>
-                  {docTypeNames[docType] || docType}
+                <p className='font-medium capitalize'>
+                  {docType.replace(/_/g, ' ')}
                 </p>
-                {isUploaded(docType) ? (
+                {isUploaded ? (
                   <p className='text-sm text-green-600'>✓ Uploaded</p>
                 ) : (
-                  <p className='text-sm text-yellow-600'>Required</p>
+                  <p className='text-sm text-red-600'>Required</p>
                 )}
               </div>
-              {!isUploaded(docType) && (
-                <div className='flex items-center space-x-2'>
+              {!isUploaded && (
+                <div>
                   <input
                     type='file'
                     id={`file-${docType}`}
@@ -100,20 +98,21 @@ export function DocumentChecklist({
                     }}
                   />
                   <Button
+                    variant='outline'
                     size='sm'
+                    disabled={uploading === docType}
                     onClick={() =>
                       document.getElementById(`file-${docType}`)?.click()
                     }
-                    disabled={uploadingFor === docType}
                   >
-                    {uploadingFor === docType ? 'Uploading...' : 'Upload'}
+                    {uploading === docType ? 'Uploading...' : 'Upload'}
                   </Button>
                 </div>
               )}
             </CardContent>
           </Card>
-        ))
-      )}
+        )
+      })}
     </div>
   )
 }
