@@ -35,11 +35,19 @@ export async function GET(request: Request) {
     } = await supabase.auth.exchangeCodeForSession(code)
 
     if (session?.user) {
+      // Link applicant record (unchanged)
       await supabase
         .from('applicants')
         .update({ user_id: session.user.id })
         .eq('email', session.user.email)
         .neq('user_id', session.user.id)
+
+      // Link stakeholder record for pre-approved stakeholders
+      await supabase
+        .from('stakeholders')
+        .update({ user_id: session.user.id })
+        .eq('email', session.user.email)
+        .is('user_id', null)
     }
   }
 

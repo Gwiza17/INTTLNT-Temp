@@ -33,6 +33,7 @@ export async function middleware(request: NextRequest) {
     '/eoi',
     '/eoi/success',
   ]
+
   const isPublic = publicRoutes.some((route) =>
     route === '/' ? path === '/' : path.startsWith(route),
   )
@@ -50,14 +51,34 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(dashboardUrl)
   }
 
+  // ✅ DASHBOARD ROUTING WITH AUTO snake_case → kebab-case
   if (user && path === '/dashboard') {
     const db = getServiceClient()
 
-    const { data: stakeholder } = await db
+    let { data: stakeholder } = await db
       .from('stakeholders')
       .select('roles, status')
       .eq('user_id', user.id)
       .maybeSingle()
+
+    if (!stakeholder && user.email) {
+      const { data: byEmail } = await db
+        .from('stakeholders')
+        .select('roles, status')
+        .eq('email', user.email)
+        .eq('status', 'approved')
+        .maybeSingle()
+
+      if (byEmail) {
+        stakeholder = byEmail
+
+        await db
+          .from('stakeholders')
+          .update({ user_id: user.id })
+          .eq('email', user.email)
+          .is('user_id', null)
+      }
+    }
 
     console.log('user.id:', user.id)
     console.log('stakeholder:', JSON.stringify(stakeholder))
@@ -68,7 +89,11 @@ export async function middleware(request: NextRequest) {
       stakeholder.roles.length > 0
     ) {
       const role = stakeholder.roles[0]
-      url.pathname = `/dashboard/${role}`
+
+      // 🔥 Convert snake_case DB role to kebab-case folder name
+      const rolePath = role.replaceAll('_', '-')
+
+      url.pathname = `/dashboard/${rolePath}`
       return NextResponse.redirect(url)
     }
 
@@ -89,7 +114,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Role-based route protection — also use service client
+  // Role-based route protection
   if (user && path.startsWith('/dashboard/admin')) {
     const db = getServiceClient()
     const { data: stakeholder } = await db
