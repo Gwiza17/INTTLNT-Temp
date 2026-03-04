@@ -67,7 +67,7 @@ export default function Header() {
           {/* Desktop Auth Buttons */}
           <div className='hidden md:flex items-center space-x-4'>
             <Link href='/login'>
-              <Button variant='outline' size='sm'>
+              <Button size='sm' className='bg-white text-slate-900 hover:bg-gray-200'>
                 Login
               </Button>
             </Link>
@@ -124,7 +124,7 @@ export default function Header() {
               ))}
               <div className='flex flex-col space-y-2 pt-4 border-t border-white/10'>
                 <Link href='/login' onClick={() => setIsMenuOpen(false)}>
-                  <Button variant='outline' className='w-full'>
+                  <Button className='w-full bg-white text-slate-900 hover:bg-gray-200'>
                     Login
                   </Button>
                 </Link>
