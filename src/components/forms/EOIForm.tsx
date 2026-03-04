@@ -124,27 +124,16 @@ const COUNTRIES = [
 const DISCIPLINES = [
   { value: 'engineering', label: 'Engineering' },
   { value: 'nursing', label: 'Nursing' },
-  { value: 'medicine', label: 'Medicine' },
-  { value: 'accounting', label: 'Accounting' },
-  { value: 'it', label: 'Information Technology' },
-  { value: 'education', label: 'Education' },
-  { value: 'pharmacy', label: 'Pharmacy' },
-  { value: 'architecture', label: 'Architecture' },
-  { value: 'law', label: 'Law' },
   { value: 'other', label: 'Other' },
 ]
 
 const DESTINATIONS = [
   { value: 'canada', label: 'Canada' },
   { value: 'australia', label: 'Australia' },
-  { value: 'uk', label: 'United Kingdom' },
-  { value: 'new-zealand', label: 'New Zealand' },
-  { value: 'ireland', label: 'Ireland' },
+
 ]
 
 const INTAKES = [
-  'January 2026',
-  'May 2026',
   'September 2026',
   'January 2027',
   'May 2027',
@@ -590,7 +579,7 @@ export default function EOIForm({
                 <Input
                   label='GPA (optional)'
                   {...methods.register('gpa')}
-                  placeholder='e.g. 75'
+                  placeholder='e.g. 4'
                 />
                 <Select
                   label='Years of Work Experience'
