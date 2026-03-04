@@ -43,7 +43,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Live Pathway Section */}
+      {/* Live Pathway Section — Engineering */}
       <section className='py-12 bg-white'>
         <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
           <div className='bg-green-50 p-6 rounded-lg border border-green-200'>
@@ -74,6 +74,50 @@ export default function HomePage() {
               <div className='flex flex-col md:flex-row items-center md:items-start space-y-2 md:space-y-0 md:space-x-4 mt-4 md:mt-0'>
                 <Link href='/engineering'>
                   <Button>Apply Now — Engineering (Live)</Button>
+                </Link>
+
+                <Link href='/ielts'>
+                  <Button variant='outline'>Check IELTS Readiness</Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Live Pathway Section — Nursing */}
+      <section className='py-12 bg-white'>
+        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
+          <div className='bg-green-50 p-6 rounded-lg border border-green-200'>
+            <div className='inline-block bg-green-600 text-white text-xs px-2 py-1 rounded mb-2'>
+              LIVE — Recruiting Now (2027)
+            </div>
+            <h2 className='text-2xl font-bold mb-2'>
+              Nursing Pathway: Registration → Australia (2027)
+            </h2>
+            <p className='mb-4'>
+              We are recruiting qualified nursing graduates now. If you meet the
+              fast-track criteria below, apply today. If not, start with IELTS
+              readiness and we'll route you into a nurture plan to reach the
+              threshold quickly.
+            </p>
+            <div className='grid md:grid-cols-2 gap-4 mb-4'>
+              <div>
+                <h3 className='font-semibold'>
+                  Fast-track eligibility (apply now):
+                </h3>
+                <ul className='list-disc pl-5 text-sm'>
+                  <li>IELTS ≥ 7.0 overall, no band less than 7.0</li>
+                  <li>4-year nursing degree or Master of Nursing Practice</li>
+                  <li>
+                    Active nursing registration in home country (AHPRA-eligible)
+                  </li>
+                  <li>Financial capacity to commence the process</li>
+                </ul>
+              </div>
+              <div className='flex flex-col md:flex-row items-center md:items-start space-y-2 md:space-y-0 md:space-x-4 mt-4 md:mt-0'>
+                <Link href='/nursing'>
+                  <Button>Apply Now — Nursing (Live)</Button>
                 </Link>
                 <Link href='/ielts'>
                   <Button variant='outline'>Check IELTS Readiness</Button>
