@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card, CardContent } from '@/components/ui/Card'
 
-export default function LoginPage() {
+function LoginForm() {
   const [email, setEmail] = useState('')
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
@@ -16,7 +16,6 @@ export default function LoginPage() {
   const redirect = searchParams.get('redirect') || '/dashboard'
   const supabase = createClient()
 
-  // Optional: check if user is already logged in, redirect to dashboard
   useEffect(() => {
     const checkUser = async () => {
       const {
@@ -37,7 +36,6 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        // Pass the redirect URL as a query parameter to the callback
         emailRedirectTo: `${window.location.origin}/callback?redirect=${encodeURIComponent(redirect)}`,
       },
     })
@@ -87,5 +85,19 @@ export default function LoginPage() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className='min-h-screen flex items-center justify-center bg-gray-50'>
+          <div className='text-gray-500'>Loading...</div>
+        </div>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   )
 }
