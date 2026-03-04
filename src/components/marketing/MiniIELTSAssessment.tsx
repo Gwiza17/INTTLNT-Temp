@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
-import { Select } from '@/components/ui/Select'
 
 type Answers = {
   englishLevel?: string
@@ -14,7 +13,6 @@ type Answers = {
 function getResult(answers: Answers): { message: string; ready: boolean } {
   const { englishLevel, previousIELTS, timeline } = answers
 
-  // Already scored 7.0+ — ready now
   if (previousIELTS === 'yes_above') {
     return {
       ready: true,
@@ -23,7 +21,6 @@ function getResult(answers: Answers): { message: string; ready: boolean } {
     }
   }
 
-  // Advanced English + no previous test or below 7.0 + planning soon
   if (
     englishLevel === 'advanced' &&
     (timeline === '1month' || timeline === '3months')
@@ -35,7 +32,6 @@ function getResult(answers: Answers): { message: string; ready: boolean } {
     }
   }
 
-  // Advanced but no urgency
   if (
     englishLevel === 'advanced' &&
     (timeline === '6months' || timeline === 'unsure')
@@ -47,7 +43,6 @@ function getResult(answers: Answers): { message: string; ready: boolean } {
     }
   }
 
-  // Intermediate — needs prep
   if (englishLevel === 'intermediate') {
     return {
       ready: false,
@@ -56,7 +51,6 @@ function getResult(answers: Answers): { message: string; ready: boolean } {
     }
   }
 
-  // Beginner — needs significant prep
   if (englishLevel === 'beginner') {
     return {
       ready: false,
@@ -65,7 +59,6 @@ function getResult(answers: Answers): { message: string; ready: boolean } {
     }
   }
 
-  // Fallback
   return {
     ready: false,
     message:
@@ -73,19 +66,91 @@ function getResult(answers: Answers): { message: string; ready: boolean } {
   }
 }
 
+const questions = [
+  {
+    key: 'englishLevel',
+    question: 'How comfortable are you with English?',
+    options: [
+      {
+        value: 'beginner',
+        label: 'Beginner',
+        description: 'I struggle with English',
+      },
+      {
+        value: 'intermediate',
+        label: 'Intermediate',
+        description: 'I can communicate but make errors',
+      },
+      {
+        value: 'advanced',
+        label: 'Advanced',
+        description: 'I am fluent and confident',
+      },
+    ],
+  },
+  {
+    key: 'previousIELTS',
+    question: 'Have you taken IELTS before?',
+    options: [
+      {
+        value: 'no',
+        label: 'Never taken IELTS',
+        description: 'This will be my first time',
+      },
+      {
+        value: 'yes',
+        label: 'Yes, scored below 7.0',
+        description: 'I scored under the threshold',
+      },
+      {
+        value: 'yes_above',
+        label: 'Yes, scored 7.0 or above',
+        description: 'I already meet the requirement',
+      },
+    ],
+  },
+  {
+    key: 'timeline',
+    question: 'How soon do you plan to take IELTS?',
+    options: [
+      {
+        value: '1month',
+        label: 'Within 1 month',
+        description: 'I want to book very soon',
+      },
+      {
+        value: '3months',
+        label: 'Within 3 months',
+        description: 'I have a bit of time to prepare',
+      },
+      {
+        value: '6months',
+        label: 'Within 6 months',
+        description: 'I have time to prepare well',
+      },
+      {
+        value: 'unsure',
+        label: 'Not sure yet',
+        description: 'I need guidance on timing',
+      },
+    ],
+  },
+]
+
 export default function MiniIELTSAssessment() {
-  const [step, setStep] = useState(1)
+  const [step, setStep] = useState(0)
   const [answers, setAnswers] = useState<Answers>({})
   const [result, setResult] = useState<{
     message: string
     ready: boolean
   } | null>(null)
 
-  const handleAnswer = (data: Partial<Answers>) => {
-    const updated = { ...answers, ...data }
+  const handleAnswer = (value: string) => {
+    const current = questions[step]
+    const updated = { ...answers, [current.key]: value }
     setAnswers(updated)
 
-    if (step < 3) {
+    if (step < questions.length - 1) {
       setStep(step + 1)
     } else {
       setResult(getResult(updated))
@@ -95,10 +160,12 @@ export default function MiniIELTSAssessment() {
   if (result) {
     return (
       <div
-        className={`p-6 rounded-lg text-center ${result.ready ? 'bg-green-50' : 'bg-blue-50'}`}
+        className={`p-8 rounded-2xl text-center ${result.ready ? 'bg-green-50 border border-green-200' : 'bg-blue-50 border border-blue-200'}`}
       >
-        <div className='text-3xl mb-3'>{result.ready ? '✅' : '📚'}</div>
-        <p className='text-lg text-gray-800 mb-6'>{result.message}</p>
+        <div className='text-4xl mb-4'>{result.ready ? '✅' : '📚'}</div>
+        <p className='text-lg text-gray-800 font-medium mb-6 max-w-xl mx-auto'>
+          {result.message}
+        </p>
         <div className='flex justify-center gap-4 flex-wrap'>
           <Link href='/ielts'>
             <Button>Complete Full Assessment</Button>
@@ -108,9 +175,9 @@ export default function MiniIELTSAssessment() {
           </Link>
         </div>
         <button
-          className='mt-4 text-sm text-gray-500 underline'
+          className='mt-5 text-sm text-gray-400 underline hover:text-gray-600'
           onClick={() => {
-            setStep(1)
+            setStep(0)
             setAnswers({})
             setResult(null)
           }}
@@ -121,68 +188,47 @@ export default function MiniIELTSAssessment() {
     )
   }
 
+  const current = questions[step]
+
   return (
-    <div className='bg-gray-50 p-6 rounded-lg border'>
-      <h3 className='text-xl font-semibold mb-4'>
-        Quick IELTS Readiness Check
+    <div className='bg-white p-8 rounded-2xl border border-gray-200 shadow-sm max-w-xl mx-auto'>
+      {/* Progress bar */}
+      <div className='flex gap-2 mb-8'>
+        {questions.map((_, i) => (
+          <div
+            key={i}
+            className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
+              i <= step ? 'bg-blue-600' : 'bg-gray-200'
+            }`}
+          />
+        ))}
+      </div>
+
+      {/* Question */}
+      <h3 className='text-2xl font-bold text-gray-900 mb-1'>
+        {current.question}
       </h3>
-      <p className='text-gray-600 mb-6'>
-        Answer 3 short questions to see whether you're ready to sit IELTS now.
+      <p className='text-sm text-gray-400 mb-6'>
+        Question {step + 1} of {questions.length}
       </p>
 
-      {step === 1 && (
-        <Select
-          label='How comfortable are you with English?'
-          options={[
-            { value: '', label: 'Select an option' },
-            { value: 'beginner', label: 'Beginner — I struggle with English' },
-            {
-              value: 'intermediate',
-              label: 'Intermediate — I can communicate but make errors',
-            },
-            {
-              value: 'advanced',
-              label: 'Advanced — I am fluent and confident',
-            },
-          ]}
-          onChange={(e) => {
-            if (e.target.value) handleAnswer({ englishLevel: e.target.value })
-          }}
-        />
-      )}
-
-      {step === 2 && (
-        <Select
-          label='Have you taken IELTS before?'
-          options={[
-            { value: '', label: 'Select an option' },
-            { value: 'no', label: 'No, never taken IELTS' },
-            { value: 'yes', label: 'Yes, scored below 7.0' },
-            { value: 'yes_above', label: 'Yes, scored 7.0 or above' },
-          ]}
-          onChange={(e) => {
-            if (e.target.value) handleAnswer({ previousIELTS: e.target.value })
-          }}
-        />
-      )}
-
-      {step === 3 && (
-        <Select
-          label='How soon do you plan to take IELTS?'
-          options={[
-            { value: '', label: 'Select an option' },
-            { value: '1month', label: 'Within 1 month' },
-            { value: '3months', label: 'Within 3 months' },
-            { value: '6months', label: 'Within 6 months' },
-            { value: 'unsure', label: 'Not sure yet' },
-          ]}
-          onChange={(e) => {
-            if (e.target.value) handleAnswer({ timeline: e.target.value })
-          }}
-        />
-      )}
-
-      <p className='text-sm text-gray-500 mt-4'>Question {step} of 3</p>
+      {/* Option Cards */}
+      <div className='flex flex-col gap-3'>
+        {current.options.map((option) => (
+          <button
+            key={option.value}
+            onClick={() => handleAnswer(option.value)}
+            className='w-full text-left px-5 py-4 rounded-xl border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all duration-150 group'
+          >
+            <span className='font-semibold text-gray-900 group-hover:text-blue-700'>
+              {option.label}
+            </span>
+            <span className='block text-sm text-gray-500 mt-0.5'>
+              {option.description}
+            </span>
+          </button>
+        ))}
+      </div>
     </div>
   )
 }
