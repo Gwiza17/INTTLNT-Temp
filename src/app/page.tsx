@@ -6,42 +6,12 @@ import HowItWorks4Steps from '@/components/marketing/HowItWorks4Steps'
 import Storyboard from '@/components/marketing/Storyboard'
 import PathwayCards from '@/components/marketing/PathwayCards'
 import ChannelPartnerTeaser from '@/components/marketing/ChannelPartnerTeaser'
+import Header from '@/components/layout/Header'
 
 export default function HomePage() {
   return (
     <div className='bg-white'>
-      {/* Global Navigation */}
-      <header className='sticky top-0 bg-white shadow z-50'>
-        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16'>
-          {/* Logo */}
-          <Link href='/' className='font-bold text-xl text-gray-900'>
-            Inttlnt
-          </Link>
-
-          {/* Desktop Navigation */}
-          <nav className='hidden md:flex space-x-6 items-center text-gray-700'>
-            <Link href='/'>Home</Link>
-            <Link href='/ielts'>IELTS Preparation</Link>
-            <Link href='/engineering'>Engineering (Live)</Link>
-            <Link href='/nursing'>Nursing (2027)</Link>
-            <Link href='/partner'>Channel Partners</Link>
-            <Link href='/faq'>FAQ</Link>
-
-            {/* Utility Buttons */}
-            <Link href='/login'>
-              <Button variant='outline' size='sm'>
-                Login
-              </Button>
-            </Link>
-            <Link href='/engineering'>
-              <Button size='sm'>Apply Now</Button>
-            </Link>
-          </nav>
-
-          {/* Mobile menu button placeholder */}
-          {/* Implement your mobile menu toggle here */}
-        </div>
-      </header>
+      <Header />
 
       {/* Hero Section */}
       <section className='bg-gradient-to-b from-blue-50 to-white py-20'>
@@ -148,7 +118,7 @@ export default function HomePage() {
             See the journey before you start it
           </h2>
           <p className='text-center text-gray-600 mb-6'>
-            Here’s what success looks like when every stakeholder is aligned.
+            Here's what success looks like when every stakeholder is aligned.
           </p>
           <Storyboard />
         </div>
