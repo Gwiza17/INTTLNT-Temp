@@ -44,8 +44,7 @@ export default function Footer() {
               <li>
                 <Link
                   href='/nursing'
-                  className='text-gray-500 hover:text-gray-900'
-                >
+                  className='text-gray-500 hover:text-gray-900' >
                   Nursing (Australia)
                 </Link>
               </li>

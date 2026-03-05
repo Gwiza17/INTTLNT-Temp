@@ -130,62 +130,62 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  if (user && path.startsWith('/dashboard/funder')) {
-    const db = getServiceClient()
-    const { data: stakeholder } = await db
-      .from('stakeholders')
-      .select('roles')
-      .eq('user_id', user.id)
-      .maybeSingle()
+  // if (user && path.startsWith('/dashboard/funder')) {
+  //   const db = getServiceClient()
+  //   const { data: stakeholder } = await db
+  //     .from('stakeholders')
+  //     .select('roles')
+  //     .eq('user_id', user.id)
+  //     .maybeSingle()
 
-    if (!stakeholder || !stakeholder.roles.includes('funder')) {
-      url.pathname = '/dashboard'
-      url.search = ''
-      return NextResponse.redirect(url)
-    }
-  }
+  //   if (!stakeholder || !stakeholder.roles.includes('funder')) {
+  //     url.pathname = '/dashboard'
+  //     url.search = ''
+  //     return NextResponse.redirect(url)
+  //   }
+  // }
 
-  if (user && path.startsWith('/dashboard/migration-agent')) {
-    const db = getServiceClient()
-    const { data: stakeholder } = await db
-      .from('stakeholders')
-      .select('roles')
-      .eq('user_id', user.id)
-      .maybeSingle()
+  // if (user && path.startsWith('/dashboard/migration-agent')) {
+  //   const db = getServiceClient()
+  //   const { data: stakeholder } = await db
+  //     .from('stakeholders')
+  //     .select('roles')
+  //     .eq('user_id', user.id)
+  //     .maybeSingle()
 
-    if (!stakeholder || !stakeholder.roles.includes('migration_agent')) {
-      url.pathname = '/dashboard'
-      return NextResponse.redirect(url)
-    }
-  }
+  //   if (!stakeholder || !stakeholder.roles.includes('migration_agent')) {
+  //     url.pathname = '/dashboard'
+  //     return NextResponse.redirect(url)
+  //   }
+  // }
 
-  if (user && path.startsWith('/dashboard/education-provider')) {
-    const db = getServiceClient()
-    const { data: stakeholder } = await db
-      .from('stakeholders')
-      .select('roles')
-      .eq('user_id', user.id)
-      .maybeSingle()
+  // if (user && path.startsWith('/dashboard/education-provider')) {
+  //   const db = getServiceClient()
+  //   const { data: stakeholder } = await db
+  //     .from('stakeholders')
+  //     .select('roles')
+  //     .eq('user_id', user.id)
+  //     .maybeSingle()
 
-    if (!stakeholder || !stakeholder.roles.includes('education_provider')) {
-      url.pathname = '/dashboard'
-      return NextResponse.redirect(url)
-    }
-  }
+  //   if (!stakeholder || !stakeholder.roles.includes('education_provider')) {
+  //     url.pathname = '/dashboard'
+  //     return NextResponse.redirect(url)
+  //   }
+  // }
 
-  if (user && path.startsWith('/dashboard/employer')) {
-    const db = getServiceClient()
-    const { data: stakeholder } = await db
-      .from('stakeholders')
-      .select('roles')
-      .eq('user_id', user.id)
-      .maybeSingle()
+  // if (user && path.startsWith('/dashboard/employer')) {
+  //   const db = getServiceClient()
+  //   const { data: stakeholder } = await db
+  //     .from('stakeholders')
+  //     .select('roles')
+  //     .eq('user_id', user.id)
+  //     .maybeSingle()
 
-    if (!stakeholder || !stakeholder.roles.includes('employer')) {
-      url.pathname = '/dashboard'
-      return NextResponse.redirect(url)
-    }
-  }
+  //   if (!stakeholder || !stakeholder.roles.includes('employer')) {
+  //     url.pathname = '/dashboard'
+  //     return NextResponse.redirect(url)
+  //   }
+  // }
 
   if (user && path.startsWith('/dashboard/channel-partner')) {
     const db = getServiceClient()

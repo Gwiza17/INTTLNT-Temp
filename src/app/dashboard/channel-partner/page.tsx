@@ -4,6 +4,17 @@ import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import Link from 'next/link'
 
+type CaseWithStage = {
+  id: string
+  current_stage_id: string
+  stages: { name: string } | { name: string }[] | null
+}
+
+const getStageName = (stages: CaseWithStage['stages']): string => {
+  if (!stages) return ''
+  return Array.isArray(stages) ? (stages[0]?.name ?? '') : stages.name
+}
+
 export default async function PartnerOverview() {
   const supabase = createClient()
   const {
@@ -73,16 +84,18 @@ export default async function PartnerOverview() {
       : { data: [] }
 
   // Merge and deduplicate
-  const allCasesMap = new Map()
+  const allCasesMap = new Map<string, CaseWithStage>()
   ;[...(referredCases || []), ...(assignedCaseData || [])].forEach((c: any) => {
-    allCasesMap.set(c.id, c)
+    allCasesMap.set(c.id, c as CaseWithStage)
   })
-  const cases = Array.from(allCasesMap.values()) as any[]
+  const cases = Array.from(allCasesMap.values())
 
-  const ieltsDone =
-    cases.filter((c) => c.stages?.name?.includes('IELTS')).length || 0
-  const funded =
-    cases.filter((c) => c.stages?.name?.includes('Funding')).length || 0
+  const ieltsDone = cases.filter((c) =>
+    getStageName(c.stages).includes('IELTS'),
+  ).length
+  const funded = cases.filter((c) =>
+    getStageName(c.stages).includes('Funding'),
+  ).length
   const progressing = cases.length
 
   return (
