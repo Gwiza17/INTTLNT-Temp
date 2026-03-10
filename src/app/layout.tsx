@@ -7,7 +7,8 @@ const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'INTTLNT',
-  description: 'Global Mobility Intelligence for Critical Skills',
+  description: 'Verified pathway programs for global applicants',
+  manifest: '/site.webmanifest',
 }
 
 export default function RootLayout({
