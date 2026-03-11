@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
+import { ActivityCard } from '@/components/partner/ActivityCard'
 import Link from 'next/link'
 
 type CaseWithStage = {
@@ -98,6 +99,23 @@ export default async function PartnerOverview() {
   ).length
   const progressing = cases.length
 
+  // Last invite activity
+  const { data: lastInvite } = await supabase
+    .from('partner_invites')
+    .select('sent_at')
+    .eq('stakeholder_id', stakeholder.id)
+    .eq('status', 'sent')
+    .order('sent_at', { ascending: false })
+    .limit(1)
+    .single()
+
+  const lastSentAt = lastInvite?.sent_at ?? null
+  const daysSinceLastInvite = lastSentAt
+    ? Math.floor(
+        (Date.now() - new Date(lastSentAt).getTime()) / (1000 * 60 * 60 * 24),
+      )
+    : null
+
   return (
     <div className='space-y-6'>
       <h1 className='text-2xl font-bold'>Welcome, {stakeholder.name}</h1>
@@ -130,22 +148,10 @@ export default async function PartnerOverview() {
         </Card>
       </div>
 
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-        <Card>
-          <CardContent className='p-6'>
-            <h2 className='text-lg font-semibold mb-2'>Quick Actions</h2>
-            <div className='space-y-2'>
-              <Link href='/dashboard/channel-partner/links'>
-                <Button className='w-full'>Generate Referral Link</Button>
-              </Link>
-              <Link href='/dashboard/channel-partner/referrals'>
-                <Button variant='outline' className='w-full'>
-                  View Referrals
-                </Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Activity + Pipeline + Quick Actions */}
+      <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
+        {/* Activity streak — spans full width on mobile, 1 col on md */}
+        <ActivityCard daysSince={daysSinceLastInvite} lastSentAt={lastSentAt} />
 
         <Card>
           <CardContent className='p-6'>
@@ -163,6 +169,27 @@ export default async function PartnerOverview() {
                 <span>Total referred:</span>
                 <span className='font-bold'>{referralsByCode || 0}</span>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className='p-6'>
+            <h2 className='text-lg font-semibold mb-2'>Quick Actions</h2>
+            <div className='space-y-2'>
+              <Link href='/dashboard/channel-partner/invites'>
+                <Button className='w-full'>Send Invites</Button>
+              </Link>
+              <Link href='/dashboard/channel-partner/links'>
+                <Button variant='outline' className='w-full'>
+                  Generate Referral Link
+                </Button>
+              </Link>
+              <Link href='/dashboard/channel-partner/referrals'>
+                <Button variant='outline' className='w-full'>
+                  View Referrals
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>

@@ -25,6 +25,12 @@ export default function PartnerLayout({ children }: PartnerLayoutProps) {
               My Referrals
             </Link>
             <Link
+              href='/dashboard/channel-partner/invites'
+              className='block py-2 px-4 rounded hover:bg-white/10'
+            >
+              Send Invites
+            </Link>
+            <Link
               href='/dashboard/channel-partner/links'
               className='block py-2 px-4 rounded hover:bg-white/10'
             >
