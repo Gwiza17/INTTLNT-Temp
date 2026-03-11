@@ -29,7 +29,7 @@ export default function IELTSAssessmentPage() {
     setLoading(true)
     setMessage('')
 
-    const { error } = await supabase.from('ielts_assessments').insert({
+    const { error } = await supabase.from('ielts_assessments' as any).insert({
       full_name: formData.fullName,
       email: formData.email,
       phone: formData.phone,
