@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { useForm, FormProvider } from 'react-hook-form'
+import { useForm, FormProvider, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { eoiSchema, type EOIFormData } from '@/lib/validators/eoi'
 import { Button } from '@/components/ui/Button'
@@ -130,15 +130,9 @@ const DISCIPLINES = [
 const DESTINATIONS = [
   { value: 'canada', label: 'Canada' },
   { value: 'australia', label: 'Australia' },
-
 ]
 
-const INTAKES = [
-  'September 2026',
-  'January 2027',
-  'May 2027',
-  'September 2027',
-]
+const INTAKES = ['September 2026', 'January 2027', 'May 2027', 'September 2027']
 
 const FUNDING_TYPES = [
   { value: 'self', label: 'Self-funded' },
@@ -174,7 +168,13 @@ export default function EOIForm({
   const [step, setStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
+
+  // Referral code: URL param takes priority, then prop, then empty
+  const urlCode = searchParams.get('code') ?? ''
+  const lockedCode = urlCode || initialReferralCode || ''
+  const isCodeLocked = !!urlCode || !!initialReferralCode
 
   const methods = useForm<EOIFormData>({
     resolver: zodResolver(eoiSchema),
@@ -182,8 +182,7 @@ export default function EOIForm({
       pathwayDiscipline: initialPathway?.discipline || '',
       pathwayDestination: initialPathway?.destination || '',
       applyingWithPartner: false,
-      referralCode: initialReferralCode || '',
-      // Pre-populate optional selects so they don't fail zod's min-length check
+      referralCode: lockedCode,
       graduationYear: '',
       yearsOfExperience: '',
     },
@@ -194,6 +193,8 @@ export default function EOIForm({
     handleSubmit,
     trigger,
     watch,
+    register,
+    control,
     formState: { errors },
   } = methods
 
@@ -215,7 +216,6 @@ export default function EOIForm({
         'transcriptsFile',
       ]
     }
-
     if (step === 2) {
       fieldsToValidate = [
         'degreeTitle',
@@ -226,7 +226,6 @@ export default function EOIForm({
         'currentOccupation',
       ]
     }
-
     if (step === 3) {
       fieldsToValidate = ['ieltsStatus']
       if (ieltsStatus === 'has_result') {
@@ -242,7 +241,6 @@ export default function EOIForm({
         fieldsToValidate.push('ieltsBookingDate')
       }
     }
-
     if (step === 4) {
       fieldsToValidate = [
         'fundingType',
@@ -271,22 +269,28 @@ export default function EOIForm({
   const onSubmit = async (data: EOIFormData) => {
     setIsSubmitting(true)
     try {
+      // Auth is guaranteed by server page — user is always logged in here
+      // If session somehow expired mid-session, show a clear message instead of looping
       const {
         data: { user },
-        error: authError,
       } = await supabase.auth.getUser()
-      if (authError || !user) {
-        const currentUrl = window.location.pathname + window.location.search
-        router.push(`/login?redirect=${encodeURIComponent(currentUrl)}`)
-        return
+      if (!user) {
+        throw new Error(
+          'Your session expired. Please refresh the page and try again.',
+        )
       }
 
+      // Always use lockedCode when locked — never trust form value
+      const resolvedReferralCode = isCodeLocked
+        ? lockedCode
+        : data.referralCode || null
+
       let partnerId = null
-      if (data.referralCode) {
+      if (resolvedReferralCode) {
         const { data: partner } = await supabase
           .from('stakeholders')
           .select('id')
-          .eq('partner_code', data.referralCode)
+          .eq('partner_code', resolvedReferralCode)
           .eq('status', 'approved')
           .maybeSingle()
         if (partner) partnerId = partner.id
@@ -352,7 +356,7 @@ export default function EOIForm({
             pathway_discipline: data.pathwayDiscipline,
             pathway_destination: data.pathwayDestination,
             intake_preference: data.intakePreference,
-            referring_partner_code: data.referralCode || null,
+            referring_partner_code: resolvedReferralCode,
           },
           { onConflict: 'user_id' },
         )
@@ -483,18 +487,18 @@ export default function EOIForm({
                 <h2 className='text-xl font-bold mb-4'>Personal Information</h2>
                 <Input
                   label='Full Name'
-                  {...methods.register('fullName')}
+                  {...register('fullName')}
                   error={errors.fullName?.message}
                 />
                 <Input
                   label='Email'
                   type='email'
-                  {...methods.register('email')}
+                  {...register('email')}
                   error={errors.email?.message}
                 />
                 <Input
                   label='WhatsApp (optional)'
-                  {...methods.register('whatsapp')}
+                  {...register('whatsapp')}
                   placeholder='+27123456789'
                 />
                 <Select
@@ -503,7 +507,7 @@ export default function EOIForm({
                     { value: '', label: 'Select country' },
                     ...COUNTRIES.map((c) => ({ value: c, label: c })),
                   ]}
-                  {...methods.register('countryOfResidence')}
+                  {...register('countryOfResidence')}
                   error={errors.countryOfResidence?.message}
                 />
                 <div>
@@ -513,7 +517,7 @@ export default function EOIForm({
                   <input
                     type='date'
                     max={getMaxDob()}
-                    {...methods.register('dateOfBirth')}
+                    {...register('dateOfBirth')}
                     className='block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm'
                   />
                   {errors.dateOfBirth && (
@@ -559,12 +563,12 @@ export default function EOIForm({
                 </h2>
                 <Input
                   label='Degree Title'
-                  {...methods.register('degreeTitle')}
+                  {...register('degreeTitle')}
                   error={errors.degreeTitle?.message}
                 />
                 <Input
                   label='Institution'
-                  {...methods.register('institution')}
+                  {...register('institution')}
                   error={errors.institution?.message}
                 />
                 <Select
@@ -573,12 +577,12 @@ export default function EOIForm({
                     { value: '', label: 'Select year' },
                     ...GRADUATION_YEARS,
                   ]}
-                  {...methods.register('graduationYear')}
+                  {...register('graduationYear')}
                   error={errors.graduationYear?.message}
                 />
                 <Input
                   label='GPA (optional)'
-                  {...methods.register('gpa')}
+                  {...register('gpa')}
                   placeholder='e.g. 4'
                 />
                 <Select
@@ -587,12 +591,12 @@ export default function EOIForm({
                     { value: '', label: 'Select years' },
                     ...EXPERIENCE_YEARS,
                   ]}
-                  {...methods.register('yearsOfExperience')}
+                  {...register('yearsOfExperience')}
                   error={errors.yearsOfExperience?.message}
                 />
                 <Input
                   label='Current Occupation'
-                  {...methods.register('currentOccupation')}
+                  {...register('currentOccupation')}
                   placeholder='e.g. Civil Engineer'
                 />
               </CardContent>
@@ -610,7 +614,7 @@ export default function EOIForm({
                     { value: '', label: 'Select status' },
                     ...IELTS_STATUSES,
                   ]}
-                  {...methods.register('ieltsStatus')}
+                  {...register('ieltsStatus')}
                   error={errors.ieltsStatus?.message}
                 />
                 {ieltsStatus === 'has_result' && (
@@ -621,9 +625,7 @@ export default function EOIForm({
                       step='0.5'
                       min='0'
                       max='9'
-                      {...methods.register('ieltsOverall', {
-                        valueAsNumber: true,
-                      })}
+                      {...register('ieltsOverall', { valueAsNumber: true })}
                     />
                     <Input
                       label='Listening'
@@ -631,9 +633,7 @@ export default function EOIForm({
                       step='0.5'
                       min='0'
                       max='9'
-                      {...methods.register('ieltsListening', {
-                        valueAsNumber: true,
-                      })}
+                      {...register('ieltsListening', { valueAsNumber: true })}
                     />
                     <Input
                       label='Reading'
@@ -641,9 +641,7 @@ export default function EOIForm({
                       step='0.5'
                       min='0'
                       max='9'
-                      {...methods.register('ieltsReading', {
-                        valueAsNumber: true,
-                      })}
+                      {...register('ieltsReading', { valueAsNumber: true })}
                     />
                     <Input
                       label='Writing'
@@ -651,9 +649,7 @@ export default function EOIForm({
                       step='0.5'
                       min='0'
                       max='9'
-                      {...methods.register('ieltsWriting', {
-                        valueAsNumber: true,
-                      })}
+                      {...register('ieltsWriting', { valueAsNumber: true })}
                     />
                     <Input
                       label='Speaking'
@@ -661,9 +657,7 @@ export default function EOIForm({
                       step='0.5'
                       min='0'
                       max='9'
-                      {...methods.register('ieltsSpeaking', {
-                        valueAsNumber: true,
-                      })}
+                      {...register('ieltsSpeaking', { valueAsNumber: true })}
                     />
                     <FileInput
                       name='ieltsResultFile'
@@ -678,7 +672,7 @@ export default function EOIForm({
                   <Input
                     label='Test Date'
                     type='date'
-                    {...methods.register('ieltsBookingDate')}
+                    {...register('ieltsBookingDate')}
                   />
                 )}
               </CardContent>
@@ -696,7 +690,7 @@ export default function EOIForm({
                     { value: '', label: 'Select funding type' },
                     ...FUNDING_TYPES,
                   ]}
-                  {...methods.register('fundingType')}
+                  {...register('fundingType')}
                   error={errors.fundingType?.message}
                 />
                 <FileInput
@@ -709,7 +703,7 @@ export default function EOIForm({
                 <div className='flex items-center space-x-2'>
                   <input
                     type='checkbox'
-                    {...methods.register('applyingWithPartner')}
+                    {...register('applyingWithPartner')}
                     className='h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500'
                   />
                   <label className='text-sm text-gray-700'>
@@ -721,12 +715,12 @@ export default function EOIForm({
                     <h3 className='text-lg font-semibold'>Partner Details</h3>
                     <Input
                       label='Partner Full Name'
-                      {...methods.register('partnerFullName')}
+                      {...register('partnerFullName')}
                     />
                     <Input
                       label='Partner Email'
                       type='email'
-                      {...methods.register('partnerEmail')}
+                      {...register('partnerEmail')}
                     />
                     <FileInput
                       name='partnerDocsFile'
@@ -736,6 +730,7 @@ export default function EOIForm({
                     />
                   </div>
                 )}
+
                 <h3 className='text-lg font-semibold mt-4'>
                   Pathway Selection
                 </h3>
@@ -745,7 +740,7 @@ export default function EOIForm({
                     { value: '', label: 'Select discipline' },
                     ...DISCIPLINES,
                   ]}
-                  {...methods.register('pathwayDiscipline')}
+                  {...register('pathwayDiscipline')}
                   error={errors.pathwayDiscipline?.message}
                 />
                 <Select
@@ -754,7 +749,7 @@ export default function EOIForm({
                     { value: '', label: 'Select destination' },
                     ...DESTINATIONS,
                   ]}
-                  {...methods.register('pathwayDestination')}
+                  {...register('pathwayDestination')}
                   error={errors.pathwayDestination?.message}
                 />
                 <Select
@@ -763,14 +758,47 @@ export default function EOIForm({
                     { value: '', label: 'Select intake' },
                     ...INTAKES.map((i) => ({ value: i, label: i })),
                   ]}
-                  {...methods.register('intakePreference')}
+                  {...register('intakePreference')}
                   error={errors.intakePreference?.message}
                 />
-                <Input
-                  label='Referral Code (optional)'
-                  {...methods.register('referralCode')}
-                  placeholder='Enter code if you have one'
-                />
+
+                {/* Referral Code — locked if came via partner invite link */}
+                <div>
+                  <label className='block text-sm font-medium text-gray-700 mb-1'>
+                    Referral Code{' '}
+                    {!isCodeLocked && (
+                      <span className='text-gray-400 font-normal'>
+                        (optional)
+                      </span>
+                    )}
+                  </label>
+                  {isCodeLocked ? (
+                    <div className='flex items-center gap-2'>
+                      <input
+                        type='text'
+                        value={lockedCode}
+                        readOnly
+                        className='flex-1 border border-gray-200 rounded-md px-3 py-2 text-sm bg-gray-100 text-gray-500 cursor-not-allowed font-mono tracking-widest'
+                      />
+                      <span className='text-xs text-green-600 whitespace-nowrap'>
+                        ✓ Applied
+                      </span>
+                    </div>
+                  ) : (
+                    <Controller
+                      name='referralCode'
+                      control={control}
+                      render={({ field }) => (
+                        <input
+                          {...field}
+                          type='text'
+                          placeholder='Enter code if you have one'
+                          className='w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
+                        />
+                      )}
+                    />
+                  )}
+                </div>
               </CardContent>
             </Card>
           )}

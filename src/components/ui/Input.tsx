@@ -8,7 +8,8 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, label, error, id, ...props }, ref) => {
-    const inputId = id || `input-${Math.random().toString(36).substring(2, 9)}`
+    const generatedId = React.useId()
+    const inputId = id || generatedId
 
     return (
       <div className='w-full'>
@@ -25,9 +26,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           id={inputId}
           ref={ref}
           className={cn(
-            // 🔵 Blue border by default
             'block w-full rounded-md border border-blue-500 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm px-3 py-2',
-            // 🔴 Error state overrides blue
             error && 'border-red-500 focus:ring-red-500 focus:border-red-500',
             className,
           )}
