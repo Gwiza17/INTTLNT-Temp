@@ -11,6 +11,41 @@ function getServiceClient() {
   )
 }
 
+// Helper: look up stakeholder by user_id, fall back to email, and link user_id if missing
+async function getStakeholder(
+  db: ReturnType<typeof getServiceClient>,
+  userId: string,
+  email?: string | null,
+) {
+  // First try by user_id
+  let { data: stakeholder } = await db
+    .from('stakeholders')
+    .select('roles, status')
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  // Fall back to email match and link user_id
+  if (!stakeholder && email) {
+    const { data: byEmail } = await db
+      .from('stakeholders')
+      .select('roles, status')
+      .eq('email', email)
+      .maybeSingle()
+
+    if (byEmail) {
+      stakeholder = byEmail
+      // Link the user_id so future lookups are instant
+      await db
+        .from('stakeholders')
+        .update({ user_id: userId })
+        .eq('email', email)
+        .is('user_id', null)
+    }
+  }
+
+  return stakeholder
+}
+
 export async function middleware(request: NextRequest) {
   const { supabase, response } = createClient(request)
   const {
@@ -54,31 +89,7 @@ export async function middleware(request: NextRequest) {
   // ✅ DASHBOARD ROUTING WITH AUTO snake_case → kebab-case
   if (user && path === '/dashboard') {
     const db = getServiceClient()
-
-    let { data: stakeholder } = await db
-      .from('stakeholders')
-      .select('roles, status')
-      .eq('user_id', user.id)
-      .maybeSingle()
-
-    if (!stakeholder && user.email) {
-      const { data: byEmail } = await db
-        .from('stakeholders')
-        .select('roles, status')
-        .eq('email', user.email)
-        .eq('status', 'approved')
-        .maybeSingle()
-
-      if (byEmail) {
-        stakeholder = byEmail
-
-        await db
-          .from('stakeholders')
-          .update({ user_id: user.id })
-          .eq('email', user.email)
-          .is('user_id', null)
-      }
-    }
+    const stakeholder = await getStakeholder(db, user.id, user.email)
 
     console.log('user.id:', user.id)
     console.log('stakeholder:', JSON.stringify(stakeholder))
@@ -89,10 +100,7 @@ export async function middleware(request: NextRequest) {
       stakeholder.roles.length > 0
     ) {
       const role = stakeholder.roles[0]
-
-      // 🔥 Convert snake_case DB role to kebab-case folder name
       const rolePath = role.replaceAll('_', '-')
-
       url.pathname = `/dashboard/${rolePath}`
       return NextResponse.redirect(url)
     }
@@ -117,11 +125,7 @@ export async function middleware(request: NextRequest) {
   // Role-based route protection
   if (user && path.startsWith('/dashboard/admin')) {
     const db = getServiceClient()
-    const { data: stakeholder } = await db
-      .from('stakeholders')
-      .select('roles')
-      .eq('user_id', user.id)
-      .maybeSingle()
+    const stakeholder = await getStakeholder(db, user.id, user.email)
 
     if (!stakeholder || !stakeholder.roles.includes('admin')) {
       url.pathname = '/dashboard'
@@ -132,11 +136,7 @@ export async function middleware(request: NextRequest) {
 
   // if (user && path.startsWith('/dashboard/funder')) {
   //   const db = getServiceClient()
-  //   const { data: stakeholder } = await db
-  //     .from('stakeholders')
-  //     .select('roles')
-  //     .eq('user_id', user.id)
-  //     .maybeSingle()
+  //   const stakeholder = await getStakeholder(db, user.id, user.email)
 
   //   if (!stakeholder || !stakeholder.roles.includes('funder')) {
   //     url.pathname = '/dashboard'
@@ -147,11 +147,7 @@ export async function middleware(request: NextRequest) {
 
   // if (user && path.startsWith('/dashboard/migration-agent')) {
   //   const db = getServiceClient()
-  //   const { data: stakeholder } = await db
-  //     .from('stakeholders')
-  //     .select('roles')
-  //     .eq('user_id', user.id)
-  //     .maybeSingle()
+  //   const stakeholder = await getStakeholder(db, user.id, user.email)
 
   //   if (!stakeholder || !stakeholder.roles.includes('migration_agent')) {
   //     url.pathname = '/dashboard'
@@ -161,11 +157,7 @@ export async function middleware(request: NextRequest) {
 
   // if (user && path.startsWith('/dashboard/education-provider')) {
   //   const db = getServiceClient()
-  //   const { data: stakeholder } = await db
-  //     .from('stakeholders')
-  //     .select('roles')
-  //     .eq('user_id', user.id)
-  //     .maybeSingle()
+  //   const stakeholder = await getStakeholder(db, user.id, user.email)
 
   //   if (!stakeholder || !stakeholder.roles.includes('education_provider')) {
   //     url.pathname = '/dashboard'
@@ -175,11 +167,7 @@ export async function middleware(request: NextRequest) {
 
   // if (user && path.startsWith('/dashboard/employer')) {
   //   const db = getServiceClient()
-  //   const { data: stakeholder } = await db
-  //     .from('stakeholders')
-  //     .select('roles')
-  //     .eq('user_id', user.id)
-  //     .maybeSingle()
+  //   const stakeholder = await getStakeholder(db, user.id, user.email)
 
   //   if (!stakeholder || !stakeholder.roles.includes('employer')) {
   //     url.pathname = '/dashboard'
@@ -189,14 +177,11 @@ export async function middleware(request: NextRequest) {
 
   if (user && path.startsWith('/dashboard/channel-partner')) {
     const db = getServiceClient()
-    const { data: stakeholder } = await db
-      .from('stakeholders')
-      .select('roles')
-      .eq('user_id', user.id)
-      .maybeSingle()
+    const stakeholder = await getStakeholder(db, user.id, user.email)
 
     if (!stakeholder || !stakeholder.roles.includes('channel_partner')) {
       url.pathname = '/dashboard'
+      url.search = ''
       return NextResponse.redirect(url)
     }
   }
