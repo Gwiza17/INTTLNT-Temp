@@ -29,18 +29,20 @@ export default function IELTSAvailabilityPage() {
     setLoading(true)
     setMessage('')
 
-    const { error } = await supabase.from('ielts_availability_requests').insert({
-      full_name: formData.fullName,
-      email: formData.email,
-      phone: formData.phone,
-      country: formData.country,
-      city: formData.city,
-      exam_type: formData.examType,
-      preferred_month: formData.preferredMonth,
-      urgency: formData.urgency,
-      notes: formData.notes || null,
-      status: 'new',
-    })
+   const { error } = await supabase
+     .from('ielts_availability_requests' as any)
+     .insert({
+       full_name: formData.fullName,
+       email: formData.email,
+       phone: formData.phone,
+       country: formData.country,
+       city: formData.city,
+       exam_type: formData.examType,
+       preferred_month: formData.preferredMonth,
+       urgency: formData.urgency,
+       notes: formData.notes || null,
+       status: 'new',
+     })
 
     if (error) {
       console.error('insert error:', JSON.stringify(error))
