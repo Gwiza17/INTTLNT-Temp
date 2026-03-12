@@ -29,18 +29,20 @@ export default function PartnerDemoPage() {
     setLoading(true)
     setMessage('')
 
-    const { error } = await supabase.from('partner_demo_requests').insert({
-      full_name: formData.fullName,
-      email: formData.email,
-      phone: formData.phone,
-      organization: formData.organization || null,
-      country: formData.country,
-      business_type: formData.businessType,
-      monthly_leads: formData.monthlyLeads || null,
-      preferred_contact_method: formData.preferredContactMethod,
-      notes: formData.notes || null,
-      status: 'pending',
-    })
+    const { error } = await supabase
+      .from('partner_demo_requests' as any)
+      .insert({
+        full_name: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        organization: formData.organization || null,
+        country: formData.country,
+        business_type: formData.businessType,
+        monthly_leads: formData.monthlyLeads || null,
+        preferred_contact_method: formData.preferredContactMethod,
+        notes: formData.notes || null,
+        status: 'pending',
+      })
 
     if (error) {
       console.error('insert error:', JSON.stringify(error))
@@ -208,9 +210,7 @@ export default function PartnerDemoPage() {
                     Community Organization
                   </option>
                   <option value='education_agent'>Education Agent</option>
-                  <option value='migration_advisory'>
-                    Migration Advisory
-                  </option>
+                  <option value='migration_advisory'>Migration Advisory</option>
                   <option value='recruitment_partner'>
                     Recruitment Partner
                   </option>
