@@ -11,7 +11,7 @@ function getServiceClient() {
   )
 }
 
-// Helper: look up stakeholder by user_id, fall back to email, and link user_id if missing
+// Helper: look up stakeholder by user_id, fall back to email, and always correct user_id if mismatched
 async function getStakeholder(
   db: ReturnType<typeof getServiceClient>,
   userId: string,
@@ -24,7 +24,7 @@ async function getStakeholder(
     .eq('user_id', userId)
     .maybeSingle()
 
-  // Fall back to email match and link user_id
+  // Fall back to email if not found by user_id
   if (!stakeholder && email) {
     const { data: byEmail } = await db
       .from('stakeholders')
@@ -34,12 +34,12 @@ async function getStakeholder(
 
     if (byEmail) {
       stakeholder = byEmail
-      // Link the user_id so future lookups are instant
+      // Always update user_id to correct any mismatch (not just when null)
       await db
         .from('stakeholders')
         .update({ user_id: userId })
         .eq('email', email)
-        .is('user_id', null)
+        .neq('user_id', userId)
     }
   }
 
@@ -100,6 +100,7 @@ export async function middleware(request: NextRequest) {
       stakeholder.roles.length > 0
     ) {
       const role = stakeholder.roles[0]
+      // 🔄 Convert snake_case DB role to kebab-case folder name
       const rolePath = role.replaceAll('_', '-')
       url.pathname = `/dashboard/${rolePath}`
       return NextResponse.redirect(url)
@@ -181,7 +182,6 @@ export async function middleware(request: NextRequest) {
 
     if (!stakeholder || !stakeholder.roles.includes('channel_partner')) {
       url.pathname = '/dashboard'
-      url.search = ''
       return NextResponse.redirect(url)
     }
   }
