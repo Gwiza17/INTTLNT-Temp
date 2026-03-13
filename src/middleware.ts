@@ -94,6 +94,7 @@ export async function middleware(request: NextRequest) {
     console.log('user.id:', user.id)
     console.log('stakeholder:', JSON.stringify(stakeholder))
 
+    // Approved stakeholder with a role → go to their dashboard
     if (
       stakeholder &&
       stakeholder.status === 'approved' &&
@@ -106,20 +107,14 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(url)
     }
 
-    const { data: applicant } = await db
-      .from('applicants')
-      .select('id')
-      .eq('user_id', user.id)
-      .maybeSingle()
-
-    console.log('applicant:', JSON.stringify(applicant))
-
-    if (applicant) {
-      url.pathname = '/dashboard/applicant'
+    // Unapproved/pending stakeholder → waiting for approval
+    if (stakeholder && stakeholder.status !== 'approved') {
+      url.pathname = '/dashboard/pending'
       return NextResponse.redirect(url)
     }
 
-    url.pathname = '/dashboard/pending'
+    // Everyone else (new users + existing applicants) → applicant dashboard
+    url.pathname = '/dashboard/applicant'
     return NextResponse.redirect(url)
   }
 
