@@ -20,11 +20,6 @@ export default function PartnerPage() {
             <Link href='/partner/apply'>
               <Button size='lg'>Apply to Become a Partner</Button>
             </Link>
-            <Link href='/partner/demo'>
-              <Button variant='outline' size='lg'>
-                Request a Demo
-              </Button>
-            </Link>
           </div>
         </div>
       </section>
