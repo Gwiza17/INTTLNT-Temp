@@ -124,7 +124,7 @@ export default function LoginPage() {
         </div>
       }
     >
-      <LoginForm />
+      < LoginForm />
     </Suspense>
   )
 }
