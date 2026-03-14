@@ -49,6 +49,7 @@ export async function middleware(request: NextRequest) {
   const url = request.nextUrl.clone()
   const path = url.pathname
 
+  // Public routes (middleware skips these)
   const publicRoutes = [
     '/',
     '/login',
@@ -68,14 +69,19 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Logged in → redirect login page to dashboard
+  // Allow /callback to proceed without middleware redirect
+  if (path.startsWith('/callback')) {
+    return response
+  }
+
+  // Logged-in users trying to access /login → redirect to /dashboard
   if (user && path === '/login') {
     url.pathname = '/dashboard'
     url.search = ''
     return NextResponse.redirect(url)
   }
 
-  // /dashboard routing
+  // Handle /dashboard routing
   if (user && path.startsWith('/dashboard')) {
     const stakeholder = await linkAndGetStakeholder(user.id, user.email)
 

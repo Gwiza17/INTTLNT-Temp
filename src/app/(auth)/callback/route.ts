@@ -62,12 +62,11 @@ export async function GET(request: Request) {
     .eq('user_id', userId)
     .maybeSingle()
 
-  // Redirect logic
+  // Determine redirect based on stakeholder status/role
   if (stakeholder) {
     if (stakeholder.status !== 'approved') {
       redirectTo = '/dashboard/pending'
     } else if (stakeholder.roles.length > 0) {
-      // Convert snake_case role to kebab-case dashboard
       redirectTo = `/dashboard/${stakeholder.roles[0].replaceAll('_', '-')}`
     }
   }
