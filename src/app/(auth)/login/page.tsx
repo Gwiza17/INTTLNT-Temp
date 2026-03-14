@@ -2,10 +2,10 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card, CardContent } from '@/components/ui/Card'
+import { createClient } from '@/lib/supabase/client'
 
 function LoginForm() {
   const [email, setEmail] = useState('')
@@ -33,15 +33,14 @@ function LoginForm() {
     setLoading(true)
     setMessage('')
 
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/callback?redirect=${encodeURIComponent(redirect)}`,
-      },
+    const res = await fetch('/api/auth/magic-link', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, redirectTo: redirect }),
     })
 
-    if (error) {
-      setMessage(error.message)
+    if (!res.ok) {
+      setMessage('Something went wrong. Please try again.')
     } else {
       setMessage('Check your email for the magic link!')
     }
