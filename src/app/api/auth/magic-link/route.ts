@@ -32,7 +32,7 @@ export async function POST(request: Request) {
   const magicLink = data.properties.action_link
 
   const { error: resendError } = await resend.emails.send({
-    from: 'noreply@inttlnt.com',
+    from: 'noreply@updates.inttlnt.com',
     to: email,
     subject: 'Your magic link — INTTLNT',
     html: getMagicLinkTemplate(magicLink),
