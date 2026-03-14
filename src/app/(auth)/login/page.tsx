@@ -28,6 +28,23 @@ function LoginForm() {
     checkUser()
   }, [router, redirect, supabase])
 
+  useEffect(() => {
+    const handleHashToken = async () => {
+      if (typeof window === 'undefined') return
+      if (!window.location.hash.includes('access_token')) return
+
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      if (session) {
+        window.location.replace('/dashboard')
+      }
+    }
+
+    handleHashToken()
+  }, [supabase])
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
