@@ -3,53 +3,50 @@ import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
 export async function GET(request: Request) {
-  const requestUrl = new URL(request.url)
-  const code = requestUrl.searchParams.get('code')
-  const redirectTo = requestUrl.searchParams.get('redirect') || '/dashboard'
+  const url = new URL(request.url)
+  const code = url.searchParams.get('code')
+  const tokenHash = url.searchParams.get('token_hash')
+  const type = url.searchParams.get('type')
 
-  if (code) {
-    const cookieStore = cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll()
-          },
-          setAll(cookiesToSet) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) =>
-                cookieStore.set(name, value, options),
-              )
-            } catch {
-              // Ignore if called from Server Component
-            }
-          },
-        },
+  if (!code && !tokenHash) {
+    return NextResponse.redirect(new URL('/dashboard', url.origin))
+  }
+
+  const cookieStore = cookies()
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll: () => cookieStore.getAll(),
+        setAll: (cookiesToSet) =>
+          cookiesToSet.forEach(({ name, value, options }) =>
+            cookieStore.set(name, value, options),
+          ),
       },
-    )
+    },
+  )
 
-    const {
-      data: { session },
-    } = await supabase.auth.exchangeCodeForSession(code)
-
-    if (session?.user) {
-      // Link applicant record (unchanged)
-      await supabase
-        .from('applicants')
-        .update({ user_id: session.user.id })
-        .eq('email', session.user.email)
-        .neq('user_id', session.user.id)
-
-      // Link stakeholder record for pre-approved stakeholders
-      await supabase
-        .from('stakeholders')
-        .update({ user_id: session.user.id })
-        .eq('email', session.user.email)
-        .is('user_id', null)
+  if (tokenHash && type) {
+    const { error } = await supabase.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: 'magiclink',
+    })
+    if (error) {
+      console.error('OTP verify error:', error)
+      return NextResponse.redirect(
+        new URL('/login?error=magiclink', url.origin),
+      )
+    }
+  } else if (code) {
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    if (error) {
+      console.error('Code exchange error:', error)
+      return NextResponse.redirect(
+        new URL('/login?error=magiclink', url.origin),
+      )
     }
   }
 
-  return NextResponse.redirect(new URL(redirectTo, requestUrl.origin))
+  return NextResponse.redirect(new URL('/dashboard', url.origin))
 }

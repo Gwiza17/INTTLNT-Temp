@@ -63,14 +63,38 @@ export default function PartnerApplyPage() {
     otherTypeDescription: '',
   })
   const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
+  const [showSuccess, setShowSuccess] = useState(false)
   const router = useRouter()
   const supabase = createClient()
+
+  const validateAge = (dob: string): boolean => {
+    const birthDate = new Date(dob)
+    const today = new Date()
+    const age = today.getFullYear() - birthDate.getFullYear()
+    const monthDiff = today.getMonth() - birthDate.getMonth()
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birthDate.getDate())
+    ) {
+      return age - 1 >= 18
+    }
+    return age >= 18
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    setMessage('')
+    setError('')
+
+    // Age validation for individuals
+    if (formData.applicantType === 'individual' && formData.dateOfBirth) {
+      if (!validateAge(formData.dateOfBirth)) {
+        setError('You must be at least 18 years old to apply.')
+        setLoading(false)
+        return
+      }
+    }
 
     const partnerCode =
       'PARTNER_' + Math.random().toString(36).substring(2, 8).toUpperCase()
@@ -85,7 +109,7 @@ export default function PartnerApplyPage() {
         ? formData.organizationName
         : formData.org
 
-    const { error } = await supabase.from('stakeholders').insert({
+    const { error: insertError } = await supabase.from('stakeholders').insert({
       name: resolvedName,
       email: formData.email,
       org: resolvedOrg,
@@ -97,9 +121,11 @@ export default function PartnerApplyPage() {
       country: formData.country,
       city: formData.city,
       address: formData.address,
-      preferred_contact_method: formData.preferredContactMethod,
+      preferred_contact_method: 'email',
       passport_number:
-        formData.applicantType === 'individual' ? formData.passportNumber : null,
+        formData.applicantType === 'individual'
+          ? formData.passportNumber
+          : null,
       nationality:
         formData.applicantType === 'individual' ? formData.nationality : null,
       date_of_birth:
@@ -128,20 +154,55 @@ export default function PartnerApplyPage() {
           : null,
     })
 
-    if (error) {
-      console.error('insert error:', JSON.stringify(error))
-      setMessage('Error submitting application: ' + error.message)
+    if (insertError) {
+      console.error('insert error:', JSON.stringify(insertError))
+      setError('Error submitting application: ' + insertError.message)
     } else {
-      setMessage(
-        'Application submitted! You will receive an email once approved.',
-      )
-      setTimeout(() => router.push('/partner'), 3000)
+      setShowSuccess(true)
     }
     setLoading(false)
   }
 
   return (
     <div className='max-w-2xl mx-auto py-12 px-4'>
+      {/* Success Popup */}
+      {showSuccess && (
+        <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'>
+          <div className='bg-white rounded-xl shadow-xl p-8 max-w-md w-full mx-4 text-center'>
+            <div className='w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4'>
+              <svg
+                className='w-8 h-8 text-green-600'
+                fill='none'
+                stroke='currentColor'
+                viewBox='0 0 24 24'
+              >
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M5 13l4 4L19 7'
+                />
+              </svg>
+            </div>
+            <h2 className='text-2xl font-bold text-gray-900 mb-2'>
+              Application Received!
+            </h2>
+            <p className='text-gray-600 mb-6'>
+              Thank you for applying. Your application is under review and you
+              will receive an approval email once it has been processed.
+            </p>
+            <Button
+              onClick={() => {
+                setShowSuccess(false)
+                router.push('/partner')
+              }}
+            >
+              Back to Home
+            </Button>
+          </div>
+        </div>
+      )}
+
       <Card>
         <CardContent className='p-8'>
           <h1 className='text-3xl font-bold mb-6'>Apply to Become a Partner</h1>
@@ -194,10 +255,7 @@ export default function PartnerApplyPage() {
                   required
                   value={formData.passportNumber}
                   onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      passportNumber: e.target.value,
-                    })
+                    setFormData({ ...formData, passportNumber: e.target.value })
                   }
                 />
                 <Input
@@ -205,24 +263,23 @@ export default function PartnerApplyPage() {
                   required
                   value={formData.nationality}
                   onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      nationality: e.target.value,
-                    })
+                    setFormData({ ...formData, nationality: e.target.value })
                   }
                 />
-                <Input
-                  label='Date of Birth'
-                  type='date'
-                  required
-                  value={formData.dateOfBirth}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      dateOfBirth: e.target.value,
-                    })
-                  }
-                />
+                <div>
+                  <Input
+                    label='Date of Birth'
+                    type='date'
+                    required
+                    value={formData.dateOfBirth}
+                    onChange={(e) =>
+                      setFormData({ ...formData, dateOfBirth: e.target.value })
+                    }
+                  />
+                  <p className='text-xs text-gray-500 mt-1'>
+                    You must be at least 18 years old to apply.
+                  </p>
+                </div>
                 <Input
                   label='Organization (optional)'
                   value={formData.org}
@@ -399,33 +456,13 @@ export default function PartnerApplyPage() {
               }
             />
 
-            <div>
-              <label className='block text-sm font-medium mb-2'>
-                Preferred Contact Method
-              </label>
-              <select
-                required
-                value={formData.preferredContactMethod}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    preferredContactMethod: e.target.value,
-                  })
-                }
-                className='w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
-              >
-                <option value='email'>Email</option>
-                <option value='phone'>Phone</option>
-                <option value='whatsapp'>WhatsApp</option>
-              </select>
-            </div>
-
             <Button type='submit' disabled={loading}>
               {loading ? 'Submitting...' : 'Submit Application'}
             </Button>
-            {message && (
-              <div className='mt-4 p-3 bg-blue-50 text-blue-800 rounded'>
-                {message}
+
+            {error && (
+              <div className='mt-4 p-3 bg-red-50 text-red-800 rounded'>
+                {error}
               </div>
             )}
           </form>
