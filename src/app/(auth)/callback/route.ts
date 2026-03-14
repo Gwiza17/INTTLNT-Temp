@@ -5,11 +5,10 @@ import { NextResponse } from 'next/server'
 export async function GET(request: Request) {
   const url = new URL(request.url)
   const code = url.searchParams.get('code')
-
-  let redirectTo = '/dashboard/applicant'
+  const redirectParam = url.searchParams.get('redirect') || '/dashboard'
 
   if (!code) {
-    return NextResponse.redirect(new URL(redirectTo, url.origin))
+    return NextResponse.redirect(new URL(redirectParam, url.origin))
   }
 
   const cookieStore = cookies()
@@ -52,20 +51,6 @@ export async function GET(request: Request) {
     .eq('email', email)
     .is('user_id', null)
 
-  const { data: stakeholder } = await supabase
-    .from('stakeholders')
-    .select('roles, status')
-    .eq('user_id', userId)
-    .maybeSingle()
-
-  if (stakeholder) {
-    if (stakeholder.status !== 'approved') {
-      redirectTo = '/dashboard/pending'
-    } else if (stakeholder.roles.length > 0) {
-      redirectTo = `/dashboard/${stakeholder.roles[0].replaceAll('_', '-')}`
-    }
-  }
-
-  // Redirect to /dashboard so middleware handles final routing
+  // Redirect to /dashboard and let middleware handle role-based routing
   return NextResponse.redirect(new URL('/dashboard', url.origin))
 }
