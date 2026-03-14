@@ -31,13 +31,24 @@ function LoginForm() {
   useEffect(() => {
     const handleHashToken = async () => {
       if (typeof window === 'undefined') return
-      if (!window.location.hash.includes('access_token')) return
+      const hash = window.location.hash
+      if (!hash.includes('access_token')) return
+
+      const params = new URLSearchParams(hash.substring(1))
+      const access_token = params.get('access_token')
+      const refresh_token = params.get('refresh_token')
+
+      if (!access_token || !refresh_token) return
 
       const {
         data: { session },
-      } = await supabase.auth.getSession()
+        error,
+      } = await supabase.auth.setSession({
+        access_token,
+        refresh_token,
+      })
 
-      if (session) {
+      if (session && !error) {
         window.location.replace('/dashboard')
       }
     }
