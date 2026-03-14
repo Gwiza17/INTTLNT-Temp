@@ -30,12 +30,14 @@ export async function POST(request: Request) {
   }
 
   const magicLink = data.properties.action_link
+  console.log('Generated link:', magicLink)
 
   const { error: resendError } = await resend.emails.send({
     from: 'noreply@updates.inttlnt.com',
     to: email,
     subject: 'Your magic link — INTTLNT',
     html: getMagicLinkTemplate(magicLink),
+    text: `Sign in to INTTLNT\n\nClick this link to sign in:\n${magicLink}\n\nThis link expires in 24 hours. If you didn't request this, ignore this email.`,
   })
 
   if (resendError) {

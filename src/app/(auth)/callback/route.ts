@@ -5,10 +5,11 @@ import { NextResponse } from 'next/server'
 export async function GET(request: Request) {
   const url = new URL(request.url)
   const code = url.searchParams.get('code')
-  const redirectParam = url.searchParams.get('redirect') || '/dashboard'
+  const tokenHash = url.searchParams.get('token_hash')
+  const type = url.searchParams.get('type')
 
-  if (!code) {
-    return NextResponse.redirect(new URL(redirectParam, url.origin))
+  if (!code && !tokenHash) {
+    return NextResponse.redirect(new URL('/dashboard', url.origin))
   }
 
   const cookieStore = cookies()
@@ -26,31 +27,26 @@ export async function GET(request: Request) {
     },
   )
 
-  const {
-    data: { session },
-    error,
-  } = await supabase.auth.exchangeCodeForSession(code)
-
-  if (error || !session?.user?.email) {
-    console.error('Magic link error:', error)
-    return NextResponse.redirect(new URL('/login?error=magiclink', url.origin))
+  if (tokenHash && type) {
+    const { error } = await supabase.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: 'magiclink',
+    })
+    if (error) {
+      console.error('OTP verify error:', error)
+      return NextResponse.redirect(
+        new URL('/login?error=magiclink', url.origin),
+      )
+    }
+  } else if (code) {
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    if (error) {
+      console.error('Code exchange error:', error)
+      return NextResponse.redirect(
+        new URL('/login?error=magiclink', url.origin),
+      )
+    }
   }
 
-  const userId = session.user.id
-  const email = session.user.email
-
-  await supabase
-    .from('applicants')
-    .update({ user_id: userId })
-    .eq('email', email)
-    .neq('user_id', userId)
-
-  await supabase
-    .from('stakeholders')
-    .update({ user_id: userId })
-    .eq('email', email)
-    .is('user_id', null)
-
-  // Redirect to /dashboard and let middleware handle role-based routing
   return NextResponse.redirect(new URL('/dashboard', url.origin))
 }
