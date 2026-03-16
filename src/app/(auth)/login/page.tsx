@@ -49,12 +49,12 @@ function LoginForm() {
       })
 
       if (session && !error) {
-        window.location.replace('/dashboard')
+        window.location.replace(redirect)
       }
     }
 
     handleHashToken()
-  }, [supabase])
+  }, [supabase, redirect])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -124,7 +124,7 @@ export default function LoginPage() {
         </div>
       }
     >
-      < LoginForm />
+      <LoginForm />
     </Suspense>
   )
 }
