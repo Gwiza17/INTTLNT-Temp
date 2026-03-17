@@ -52,6 +52,16 @@ export async function middleware(request: NextRequest) {
     '/faq',
     '/eoi',
     '/eoi/success',
+    '/engineering',
+    '/nursing',
+    '/ielts',
+    '/partner',
+    '/partner/apply',
+    '/partner/demo',
+    '/about',
+    '/privacy',
+    '/terms',
+    '/contact',
   ]
   const isPublic = publicRoutes.some((route) =>
     route === '/' ? path === '/' : path.startsWith(route),
