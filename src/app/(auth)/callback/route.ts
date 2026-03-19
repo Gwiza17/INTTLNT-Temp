@@ -1,3 +1,4 @@
+
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
@@ -7,9 +8,10 @@ export async function GET(request: Request) {
   const code = url.searchParams.get('code')
   const tokenHash = url.searchParams.get('token_hash')
   const type = url.searchParams.get('type')
+  const redirectTo = url.searchParams.get('redirect') || '/dashboard'
 
   if (!code && !tokenHash) {
-    return NextResponse.redirect(new URL('/dashboard', url.origin))
+    return NextResponse.redirect(new URL(redirectTo, url.origin))
   }
 
   const cookieStore = cookies()
@@ -34,19 +36,16 @@ export async function GET(request: Request) {
     })
     if (error) {
       console.error('OTP verify error:', error)
-      return NextResponse.redirect(
-        new URL('/login?error=magiclink', url.origin),
-      )
+      return NextResponse.redirect(new URL('/login?error=magiclink', url.origin))
     }
   } else if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (error) {
       console.error('Code exchange error:', error)
-      return NextResponse.redirect(
-        new URL('/login?error=magiclink', url.origin),
-      )
+      return NextResponse.redirect(new URL('/login?error=magiclink', url.origin))
     }
   }
 
-  return NextResponse.redirect(new URL('/dashboard', url.origin))
+  //Use redirect param instead of hardcoded /dashboard
+  return NextResponse.redirect(new URL(redirectTo, url.origin))
 }
