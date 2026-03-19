@@ -15,9 +15,12 @@ export default function LinkGenerator() {
   const [pathway, setPathway] = useState('')
   const [generatedLink, setGeneratedLink] = useState('')
   const [copied, setCopied] = useState(false)
+  const [origin, setOrigin] = useState('')
   const supabase = createClient()
 
   useEffect(() => {
+    setOrigin(window.location.origin)
+
     const fetchPartnerCode = async () => {
       const {
         data: { user },
@@ -34,13 +37,12 @@ export default function LinkGenerator() {
   }, [])
 
   const generateLink = () => {
-    const base = window.location.origin
     const params = new URLSearchParams()
     if (partnerCode) params.set('code', partnerCode)
     if (campaign) params.set('campaign', campaign)
     if (market) params.set('market', market)
     if (pathway) params.set('pathway', pathway)
-    setGeneratedLink(`${base}/eoi?${params.toString()}`)
+    setGeneratedLink(`${origin}/eoi?${params.toString()}`)
     setCopied(false)
   }
 
@@ -70,9 +72,11 @@ export default function LinkGenerator() {
               label='Market (optional)'
               options={[
                 { value: '', label: 'All Markets' },
-                { value: 'south-africa', label: 'South Africa' },
-                { value: 'kenya', label: 'Kenya' },
-                { value: 'nigeria', label: 'Nigeria' },
+                { value: 'sri-lanka', label: 'Sri Lanka' },
+                { value: 'pakistan', label: 'Pakistan' },
+                { value: 'fiji', label: 'Fiji' },
+                { value: 'zimbabwe', label: 'Zimbabwe' },
+                { value: 'philippines', label: 'Philippines' },
               ]}
               value={market}
               onChange={(e) => setMarket(e.target.value)}
@@ -115,7 +119,7 @@ export default function LinkGenerator() {
             You can also manually add parameters to any link:
           </p>
           <code className='bg-gray-100 p-2 rounded block text-sm'>
-            {window.location.origin}/eoi?code={partnerCode}
+            {origin}/eoi?code={partnerCode}
             &campaign=NAME&market=REGION&pathway=DISCIPLINE
           </code>
         </CardContent>
