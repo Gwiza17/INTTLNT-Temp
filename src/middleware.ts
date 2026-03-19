@@ -54,6 +54,8 @@ export async function middleware(request: NextRequest) {
     '/eoi/success',
     '/engineering',
     '/nursing',
+    '/computer-science',
+    '/teaching',
     '/ielts',
     '/partner',
     '/partner/apply',

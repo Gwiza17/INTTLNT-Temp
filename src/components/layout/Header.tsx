@@ -29,15 +29,16 @@ export default function Header() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [lastScrollY])
 
-  const navLinks = [
-    { href: '/', label: 'Home' },
-    { href: '/ielts', label: 'IELTS Preparation' },
-    { href: '/engineering', label: 'Engineering (Live)' },
-    { href: '/nursing', label: 'Nursing (2027)' },
-    { href: '/partner', label: 'Channel Partners' },
-    { href: '/faq', label: 'FAQ' },
-  ]
-
+ const navLinks = [
+   { href: '/', label: 'Home' },
+   { href: '/ielts', label: 'IELTS Preparation' },
+   { href: '/engineering', label: 'Engineering (Canada)' },
+   { href: '/computer-science', label: 'CS (Canada)' },
+   { href: '/teaching', label: 'Teaching (Canada)' },
+   { href: '/nursing', label: 'Nursing (2027)' },
+   { href: '/partner', label: 'Channel Partners' },
+   { href: '/faq', label: 'FAQ' },
+ ]
   return (
     <header
       className={`bg-slate-900 border-b border-white/10 sticky top-0 z-50 transition-transform duration-300 ${
