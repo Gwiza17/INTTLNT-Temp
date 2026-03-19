@@ -63,6 +63,7 @@ export async function middleware(request: NextRequest) {
     '/terms',
     '/contact',
   ]
+
   const isPublic = publicRoutes.some((route) =>
     route === '/' ? path === '/' : path.startsWith(route),
   )
@@ -77,13 +78,12 @@ export async function middleware(request: NextRequest) {
     return response
   }
 
+  // ✅ Honour redirect param instead of always going to /dashboard
   if (user && path === '/login') {
-    url.pathname = '/dashboard'
-    url.search = ''
-    return NextResponse.redirect(url)
+    const redirectTo = url.searchParams.get('redirect') || '/dashboard'
+    return NextResponse.redirect(new URL(redirectTo, url.origin))
   }
 
-  // Only redirect on exact /dashboard — sub-paths are already resolved
   if (user && path === '/dashboard') {
     const stakeholder = await linkAndGetStakeholder(user.id, user.email ?? null)
 
