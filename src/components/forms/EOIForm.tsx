@@ -123,7 +123,11 @@ const COUNTRIES = [
 
 const DISCIPLINES = [
   { value: 'engineering', label: 'Engineering' },
+  { value: 'computer-science', label: 'Computer Science' },
+  { value: 'teaching', label: 'Teaching' },
   { value: 'nursing', label: 'Nursing' },
+  { value: 'ict', label: 'ICT' },
+  { value: 'accounting', label: 'Accounting' },
   { value: 'other', label: 'Other' },
 ]
 
