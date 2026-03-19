@@ -1,45 +1,40 @@
-import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
+import Link from 'next/link'
+import { ReactNode } from 'react'
+import { SignOutButton } from '@/components/auth/SignOutButton'
 
-export default async function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  const supabase = await createClient()
+interface PartnerLayoutProps {
+  children: ReactNode
+}
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/login')
-  }
-
+export default function PartnerLayout({ children }: PartnerLayoutProps) {
   return (
     <div className='min-h-screen bg-gray-100'>
-      <nav className='bg-white shadow-sm'>
-        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
-          <div className='flex justify-between h-16'>
-            <div className='flex'>
-              <div className='flex-shrink-0 flex items-center'>
-                <span className='text-xl font-bold'>INTTLNT</span>
-              </div>
-            </div>
-            <div className='flex items-center'>
-              <form action='/auth/signout' method='post'>
-                <button
-                  type='submit'
-                  className='text-sm text-gray-700 hover:text-gray-900'
-                >
-                  Sign out
-                </button>
-              </form>
-            </div>
+      <div className='flex'>
+        <aside className='w-64 bg-navy text-white min-h-screen p-6 flex flex-col'>
+          <h2 className='text-xl font-bold mb-6'>Partner Dashboard</h2>
+          <nav className='space-y-2 flex-1'>
+            <Link href='/dashboard/channel-partner' className='block py-2 px-4 rounded hover:bg-white/10'>
+              Overview
+            </Link>
+            <Link href='/dashboard/channel-partner/referrals' className='block py-2 px-4 rounded hover:bg-white/10'>
+              My Referrals
+            </Link>
+            <Link href='/dashboard/channel-partner/invites' className='block py-2 px-4 rounded hover:bg-white/10'>
+              Send Invites
+            </Link>
+            <Link href='/dashboard/channel-partner/links' className='block py-2 px-4 rounded hover:bg-white/10'>
+              Generate Links
+            </Link>
+            <Link href='/dashboard/channel-partner/analytics' className='block py-2 px-4 rounded hover:bg-white/10'>
+              Analytics
+            </Link>
+          </nav>
+          <div className='pt-6 border-t border-white/10'>
+            <SignOutButton />
           </div>
-        </div>
-      </nav>
-      <main>{children}</main>
+        </aside>
+        <main className='flex-1 p-8'>{children}</main>
+      </div>
     </div>
   )
 }
