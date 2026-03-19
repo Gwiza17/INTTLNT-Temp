@@ -21,7 +21,6 @@ export default async function ApplicantDashboard() {
     redirect('/login')
   }
 
-  // Fetch applicant with their case and stage
   const { data: applicant, error } = await supabase
     .from('applicants')
     .select(
@@ -42,17 +41,17 @@ export default async function ApplicantDashboard() {
 
   if (!applicant) {
     return (
-      <div className='max-w-4xl mx-auto py-12 px-4'>
+      <div className='max-w-2xl mx-auto py-8 px-4'>
         <Card>
-          <CardContent className='p-8 text-center'>
-            <h1 className='text-2xl font-bold mb-4'>
+          <CardContent className='p-6 sm:p-8 text-center'>
+            <h1 className='text-xl sm:text-2xl font-bold mb-4'>
               Welcome to your dashboard
             </h1>
             <p className='text-gray-600 mb-6'>
               You haven't submitted an Expression of Interest yet.
             </p>
             <Link href='/eoi'>
-              <Button>Start EOI</Button>
+              <Button className='w-full sm:w-auto'>Start EOI</Button>
             </Link>
           </CardContent>
         </Card>
@@ -64,9 +63,9 @@ export default async function ApplicantDashboard() {
 
   if (!caseData) {
     return (
-      <div className='max-w-4xl mx-auto py-12 px-4'>
+      <div className='max-w-2xl mx-auto py-8 px-4'>
         <Card>
-          <CardContent className='p-8 text-center'>
+          <CardContent className='p-6 text-center'>
             <p className='text-gray-600'>
               No active case found. Please contact support.
             </p>
@@ -76,7 +75,6 @@ export default async function ApplicantDashboard() {
     )
   }
 
-  // Fetch owner info if stage_owner_user_id exists
   let ownerData = null
   if (caseData.stage_owner_user_id) {
     const { data: stakeholder } = await supabase
@@ -87,7 +85,6 @@ export default async function ApplicantDashboard() {
     ownerData = stakeholder
   }
 
-  // Fetch documents for this case
   const { data: documents } = await supabase
     .from('documents')
     .select('document_type')
@@ -96,7 +93,6 @@ export default async function ApplicantDashboard() {
   const uploadedDocTypes = documents?.map((d) => d.document_type) || []
   const requiredArtifacts: string[] = caseData.stages?.required_artifacts || []
 
-  // Compute next action message
   const nextAction = getNextActionMessage(
     caseData.stages?.name || '',
     requiredArtifacts,
@@ -104,55 +100,63 @@ export default async function ApplicantDashboard() {
   )
 
   return (
-    <div className='max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8'>
+    <div className='max-w-7xl mx-auto py-4 sm:py-8 px-4 sm:px-6 lg:px-8'>
       <ErrorBoundary>
         {/* Header */}
-        <div className='flex justify-between items-center mb-8'>
-          <h1 className='text-3xl font-bold'>My Dashboard</h1>
+        <div className='flex justify-between items-center mb-6'>
+          <h1 className='text-2xl sm:text-3xl font-bold'>My Dashboard</h1>
         </div>
 
         {/* Profile Summary */}
-        <div className='grid grid-cols-1 md:grid-cols-3 gap-6 mb-8'>
+        <div className='grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6 mb-6'>
           <Card>
-            <CardContent className='p-6'>
+            <CardContent className='p-4 sm:p-6'>
               <p className='text-sm text-gray-500'>Name</p>
-              <p className='text-lg font-medium'>{applicant.full_name}</p>
+              <p className='text-base sm:text-lg font-medium truncate'>
+                {applicant.full_name}
+              </p>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className='p-6'>
+            <CardContent className='p-4 sm:p-6'>
               <p className='text-sm text-gray-500'>Email</p>
-              <p className='text-lg font-medium'>{applicant.email}</p>
+              <p className='text-base sm:text-lg font-medium truncate'>
+                {applicant.email}
+              </p>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className='p-6'>
+            <CardContent className='p-4 sm:p-6'>
               <p className='text-sm text-gray-500'>Country</p>
-              <p className='text-lg font-medium'>{applicant.country}</p>
+              <p className='text-base sm:text-lg font-medium'>
+                {applicant.country}
+              </p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Two-column layout */}
-        <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
-          <div className='lg:col-span-2 space-y-6'>
+        {/* Two-column layout — stacks on mobile */}
+        <div className='grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6'>
+          <div className='lg:col-span-2 space-y-4 sm:space-y-6'>
             {/* Next Action Banner */}
             <Card className='border-l-4 border-blue-500'>
-              <CardContent className='p-6'>
-                <h2 className='text-sm font-semibold text-blue-600 uppercase tracking-wide'>
+              <CardContent className='p-4 sm:p-6'>
+                <h2 className='text-xs sm:text-sm font-semibold text-blue-600 uppercase tracking-wide'>
                   Next Required Action
                 </h2>
-                <p className='text-xl mt-1'>{nextAction}</p>
+                <p className='text-lg sm:text-xl mt-1'>{nextAction}</p>
               </CardContent>
             </Card>
 
             {/* Case Summary */}
             <Card>
               <CardHeader>
-                <h2 className='text-xl font-semibold'>Your Application</h2>
+                <h2 className='text-lg sm:text-xl font-semibold'>
+                  Your Application
+                </h2>
               </CardHeader>
-              <CardContent className='p-6'>
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+              <CardContent className='p-4 sm:p-6'>
+                <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6'>
                   <div>
                     <p className='text-sm text-gray-500'>Pathway</p>
                     <p className='font-medium'>{caseData.selected_pathway}</p>
@@ -182,8 +186,8 @@ export default async function ApplicantDashboard() {
             </Card>
           </div>
 
-          {/* Right column – Contact Panel */}
-          <div className='space-y-6'>
+          {/* Contact Panel — full width on mobile */}
+          <div className='space-y-4 sm:space-y-6'>
             <ContactPanel
               ownerName={ownerData?.name}
               ownerEmail={ownerData?.email}
@@ -194,8 +198,10 @@ export default async function ApplicantDashboard() {
         </div>
 
         {/* Document Checklist */}
-        <div className='mt-8'>
-          <h2 className='text-xl font-semibold mb-4'>Document Checklist</h2>
+        <div className='mt-6 sm:mt-8'>
+          <h2 className='text-lg sm:text-xl font-semibold mb-4'>
+            Document Checklist
+          </h2>
           <DocumentChecklist
             caseId={caseData.id}
             requiredArtifacts={requiredArtifacts}
@@ -204,7 +210,7 @@ export default async function ApplicantDashboard() {
         </div>
 
         {/* IELTS Availability Widget */}
-        <div className='mt-8'>
+        <div className='mt-6 sm:mt-8'>
           <IELTSAvailabilityWidget />
         </div>
       </ErrorBoundary>
