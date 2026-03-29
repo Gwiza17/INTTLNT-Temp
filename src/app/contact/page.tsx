@@ -23,7 +23,7 @@ export default function ContactPage() {
 
         {/* Content */}
         <div className='relative max-w-4xl mx-auto text-center'>
-          <h1 className='text-4xl sm:text-5xl font-bold mb-4'>Contact Us</h1>
+          <h1 className='text-4xl sm:text-5xl font-bold mb-4'> Contact Us </h1>
           <p className='text-lg sm:text-xl text-white/80'>
             Start the Conversation
           </p>
