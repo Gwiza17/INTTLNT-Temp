@@ -1,12 +1,7 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
-import PathwayMatrix from '@/components/marketing/PathwayMatrix'
-import MiniIELTSAssessment from '@/components/marketing/MiniIELTSAssessment'
-import HowItWorks4Steps from '@/components/marketing/HowItWorks4Steps'
-import Storyboard from '@/components/marketing/Storyboard'
-import PathwayCards from '@/components/marketing/PathwayCards'
-import ChannelPartnerTeaser from '@/components/marketing/ChannelPartnerTeaser'
 import Header from '@/components/layout/Header'
+import Footer from '@/components/layout/Footer'
 
 export default function HomePage() {
   return (
@@ -14,113 +9,293 @@ export default function HomePage() {
       <Header />
 
       {/* Hero Section */}
-      <section className='bg-gradient-to-b from-blue-50 to-white py-20'>
-        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center'>
-          <h1 className='text-4xl md:text-6xl font-bold text-gray-900 mb-4'>
-            Move from "I want to migrate" to "I'm ready to go."
-          </h1>
-          <p className='text-xl text-gray-600 max-w-3xl mx-auto mb-8'>
-            Inttlnt is a structured pathway platform that turns high-potential
-            applicants into admissions-ready, funder-ready, and visa-ready
-            candidates—starting with IELTS readiness and progressing through
-            screening, funding, admissions, and visa milestones.
-          </p>
-          <div className='flex justify-center space-x-4'>
-            <Link href='/engineering'>
-              <Button size='lg'>Apply Now — Engineering (Live)</Button>
-            </Link>
-            <Link href='/ielts'>
-              <Button variant='outline' size='lg'>
-                Check IELTS Readiness
-              </Button>
-            </Link>
-          </div>
-          <div className='mt-8 flex justify-center gap-6 text-sm text-gray-500'>
-            <span>✓ IELTS readiness + preparation</span>
-            <span>✓ Stage-gated eligibility screening</span>
-            <span>✓ Transparent dashboards</span>
+      <section
+        className='relative overflow-hidden'
+        style={{
+          backgroundImage: "url('/images/hero-bg.jpg')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          minHeight: '70vh',
+        }}
+      >
+        <div className='absolute inset-0 bg-slate-900/60' />
+
+        <div className='relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-center min-h-[70vh] text-center'>
+          <div className='max-w-2xl mx-auto'>
+            <h1 className='text-4xl md:text-6xl font-bold text-white mb-4 leading-tight animate-breathe'>
+              Your Pathway to Global Education & Career Success
+            </h1>
+
+            <p className='text-xl text-white/80 mb-8 animate-breathe-delay-1'>
+              Study Abroad. Build Your Future.
+            </p>
+
+            <div className='flex flex-wrap justify-center gap-4 animate-breathe-delay-2'>
+              <Link href='/livepathways'>
+                <Button
+                  size='lg'
+                  className='bg-blue-600 hover:bg-blue-700 text-white border-0'
+                >
+                  Explore Live Pathways
+                </Button>
+              </Link>
+
+              <Link href='/partner'>
+                <Button
+                  size='lg'
+                  variant='outline'
+                  className='border-white text-white hover:bg-white hover:text-slate-900'
+                >
+                  Channel Partner Program
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Live Pathway Section — Engineering */}
-      <section className='py-12 bg-white'>
+      {/* For Students + For Channel Partners */}
+      <section className='py-16 bg-gray-50'>
         <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
-          <div className='bg-green-50 p-6 rounded-lg border border-green-200'>
-            <div className='inline-block bg-green-600 text-white text-xs px-2 py-1 rounded mb-2'>
-              LIVE — Recruiting Now
+          <div className='grid md:grid-cols-2 gap-8'>
+            {/* For Students */}
+            <div
+              className='relative rounded-2xl p-8 shadow-sm border border-gray-200 bg-cover bg-center overflow-hidden'
+              style={{ backgroundImage: "url('/images/students.jpg')" }}
+            >
+              <div className='absolute inset-0 '></div>
+              <div className='relative'>
+                <div className='inline-block bg-white/80 px-3 py-1 rounded-lg mb-6'>
+                  <h2 className='text-2xl font-bold text-gray-900'>
+                    For Students
+                  </h2>
+                  <p className='text-gray-600 text-sm'>
+                    Start your journey to studying abroad
+                  </p>
+                </div>
+                <ul className='space-y-3 mb-8'>
+                  {[
+                    { icon: '🎓', label: 'IELTS Preparation' },
+                    { icon: '🏫', label: 'University Admissions' },
+                    { icon: '💼', label: 'Education Financing' },
+                    { icon: '📋', label: 'Visa Assistance' },
+                  ].map((item) => (
+                    <li
+                      key={item.label}
+                      className='flex items-center gap-3 text-gray-800 bg-blue-50 px-4 py-2 rounded-md border border-gray-200'
+                    >
+                      <span className='w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-sm'>
+                        {item.icon}
+                      </span>
+                      <span className='font-medium'>{item.label}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Link href='/livepathways'>
+                  <Button className='w-full' size='lg'>
+                    Get Started
+                  </Button>
+                </Link>
+              </div>
             </div>
-            <h2 className='text-2xl font-bold mb-2'>
-              Engineering Pathway: Masters → Canada (Ottawa)
-            </h2>
-            <p className='mb-4'>
-              We are recruiting qualified 4-year engineering graduates now. If
-              you meet the fast-track criteria below, apply today. If not, start
-              with IELTS readiness and we'll route you into a nurture plan to
-              reach the threshold quickly.
-            </p>
-            <div className='grid md:grid-cols-2 gap-4 mb-4'>
-              <div>
-                <h3 className='font-semibold'>
-                  Fast-track eligibility (apply now):
-                </h3>
-                <ul className='list-disc pl-5 text-sm'>
-                  <li>IELTS ≥ 7.0 overall (balanced modules)</li>
-                  <li>4-year engineering degree (verified)</li>
-                  <li>Strong academics (≥ 70% GPA equivalent)</li>
-                  <li>Financial capacity to commence the process</li>
+
+            {/* For Channel Partners */}
+            <div
+              className='relative rounded-2xl p-8 shadow-sm border border-gray-200 bg-cover bg-center overflow-hidden'
+              style={{
+                backgroundImage: "url('/images/channel-partner.jpg')",
+              }}
+            >
+              <div className='absolute inset-0'></div>
+              <div className='relative'>
+                <div className='inline-block  py-1 rounded-lg mb-6 bg-blue-50/70'>
+                  <h2 className='text-2xl font-bold text-gray-900'>
+                    For Channel Partners
+                  </h2>
+                  <p className='text-gray-600 text-sm'>
+                    Join our network and grow with us
+                  </p>
+                </div>
+                <ul className='space-y-3 mb-8'>
+                  {[
+                    'Dedicated Support',
+                    'Generous Commissions',
+                    'Global Opportunities',
+                  ].map((item) => (
+                    <li
+                      key={item}
+                      className='flex items-center gap-3 text-gray-800 bg-blue-50 px-4 py-2 rounded-md border border-gray-200'
+                    >
+                      <span className='text-blue-600 font-bold'>✓</span>
+                      <span className='font-medium'>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Link href='/partner'>
+                  <Button className='w-full' size='lg'>
+                    Learn More
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className='py-16 bg-white'>
+        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
+          <h2 className='text-3xl font-bold text-center mb-2'>
+            InttInt FAQs
+            <span className='text-gray-400 font-normal'>
+              {' '}
+              — Your Questions Answered
+            </span>
+          </h2>
+          <p className='text-center text-gray-500 mb-12'>
+            Everything you need to know about our pathways
+          </p>
+
+          <div className='grid md:grid-cols-3 gap-6'>
+            {[
+              {
+                icon: '📋',
+                title: 'General Overview',
+                questions: ['What is InttInt?', 'What pathways do you offer?'],
+              },
+              {
+                icon: '✅',
+                title: 'Eligibility & Requirements',
+                questions: [
+                  'What candidates are you looking for?',
+                  'Do I need work experience?',
+                ],
+              },
+              {
+                icon: '💰',
+                title: 'Costs & Funding',
+                questions: [
+                  'What costs do I need to cover?',
+                  'Can the loan cover all costs?',
+                ],
+              },
+              {
+                icon: '🏦',
+                title: 'Loans & Repayment',
+                questions: [
+                  'What is the typical loan term?',
+                  'What if I leave the country?',
+                ],
+              },
+            ].map((faq) => (
+              <div
+                key={faq.title}
+                className='bg-gray-50 rounded-xl p-6 border border-gray-100'
+              >
+                <div className='flex items-center justify-between mb-4'>
+                  <div className='flex items-center gap-3'>
+                    <span className='text-xl'>{faq.icon}</span>
+                    <h3 className='font-semibold text-gray-900'>{faq.title}</h3>
+                  </div>
+                  <span className='text-gray-400'>›</span>
+                </div>
+                <ul className='space-y-2'>
+                  {faq.questions.map((q) => (
+                    <li
+                      key={q}
+                      className='flex items-start gap-2 text-sm text-gray-600'
+                    >
+                      <span className='text-blue-500 mt-0.5'>✓</span>
+                      {q}
+                    </li>
+                  ))}
                 </ul>
               </div>
-              <div className='flex flex-col md:flex-row items-center md:items-start space-y-2 md:space-y-0 md:space-x-4 mt-4 md:mt-0'>
-                <Link href='/engineering'>
-                  <Button>Apply Now — Engineering (Live)</Button>
-                </Link>
+            ))}
 
-                <Link href='/ielts'>
-                  <Button variant='outline'>Check IELTS Readiness</Button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Live Pathway Section — Nursing */}
-      <section className='py-12 bg-white'>
-        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
-          <div className='bg-green-50 p-6 rounded-lg border border-green-200'>
-            <div className='inline-block bg-green-600 text-white text-xs px-2 py-1 rounded mb-2'>
-              LIVE — Recruiting Now (2027)
-            </div>
-            <h2 className='text-2xl font-bold mb-2'>
-              Nursing Pathway: Registration → Australia (2027)
-            </h2>
-            <p className='mb-4'>
-              We are recruiting qualified nursing graduates now. If you meet the
-              fast-track criteria below, apply today. If not, start with IELTS
-              readiness and we'll route you into a nurture plan to reach the
-              threshold quickly.
-            </p>
-            <div className='grid md:grid-cols-2 gap-4 mb-4'>
+            {/* View All FAQs card */}
+            <div className='bg-blue-600 rounded-xl p-6 flex flex-col justify-between'>
               <div>
-                <h3 className='font-semibold'>
-                  Fast-track eligibility (apply now):
+                <h3 className='font-semibold text-white text-lg mb-2'>
+                  Have more questions?
                 </h3>
-                <ul className='list-disc pl-5 text-sm'>
-                  <li>IELTS ≥ 7.0 overall, no band less than 7.0</li>
-                  <li>4-year nursing degree or Master of Nursing Practice</li>
-                  <li>
-                    Active nursing registration in home country (AHPRA-eligible)
-                  </li>
-                  <li>Financial capacity to commence the process</li>
-                </ul>
+                <p className='text-blue-100 text-sm'>
+                  Browse our full FAQ library for detailed answers.
+                </p>
               </div>
-              <div className='flex flex-col md:flex-row items-center md:items-start space-y-2 md:space-y-0 md:space-x-4 mt-4 md:mt-0'>
-                <Link href='/nursing'>
-                  <Button>Apply Now — Nursing (Live)</Button>
-                </Link>
-                <Link href='/ielts'>
-                  <Button variant='outline'>Check IELTS Readiness</Button>
+              <Link href='/faq' className='mt-6'>
+                <Button className='w-full bg-white text-blue-600 hover:bg-blue-50 border-0'>
+                  View All FAQs →
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Process Section */}
+      <section className='py-16 bg-gray-50'>
+        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
+          <div className='grid md:grid-cols-2 gap-12 items-stretch'>
+            {/* Left — Success Stories */}
+            <div
+              className='relative rounded-2xl bg-cover bg-center overflow-hidden'
+              style={{ backgroundImage: "url('/images/success-stories.jpg')" }}
+            >
+              <div className='absolute inset-0 bg-slate-800/40'></div>
+            </div>
+
+            {/* Right — Process steps */}
+            <div>
+              <h2 className='text-3xl font-bold text-gray-900 mb-2'>
+                The Process{' '}
+                <span className='font-normal text-gray-500'>Step by Step</span>
+              </h2>
+              <p className='text-gray-500 mb-8'>
+                Your journey to global education starts here.
+              </p>
+              <div className='space-y-4'>
+                {[
+                  {
+                    step: 1,
+                    title: 'Register & Assess',
+                    desc: 'Create your profile and get your readiness score',
+                  },
+                  {
+                    step: 2,
+                    title: 'Apply to University',
+                    desc: 'Submit your application with our guidance',
+                  },
+                  {
+                    step: 3,
+                    title: 'Secure Financing',
+                    desc: 'Access education funding options',
+                  },
+                  {
+                    step: 4,
+                    title: 'Get Your Visa',
+                    desc: 'Complete your visa application with support',
+                  },
+                ].map((item) => (
+                  <div
+                    key={item.step}
+                    className='flex items-center gap-4 bg-white rounded-xl p-4 border border-gray-100 shadow-sm'
+                  >
+                    <div className='w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold flex-shrink-0'>
+                      {item.step}
+                    </div>
+                    <div>
+                      <p className='font-semibold text-gray-900'>
+                        {item.title}
+                      </p>
+                      <p className='text-sm text-gray-500'>{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className='mt-8'>
+                <Link href='/faq'>
+                  <Button size='lg'>Learn the Process →</Button>
                 </Link>
               </div>
             </div>
@@ -128,59 +303,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Mini IELTS Self-Assessment */}
-      <section className='py-12 bg-gray-50'>
-        <div className='max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center'>
-          <h2 className='text-2xl font-bold mb-2'>
-            Get your IELTS readiness signal in 3 minutes
-          </h2>
-          <p className='text-gray-600 mb-6'>
-            Answer 3 quick questions to see whether you're ready to sit IELTS—or
-            should prepare first.
-          </p>
-          <MiniIELTSAssessment />
-        </div>
-      </section>
-
-      {/* How Inttlnt Works (4 steps) */}
-      <section className='py-12 bg-white'>
-        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center'>
-          <h2 className='text-2xl font-bold mb-8'>How Inttlnt Works</h2>
-          <HowItWorks4Steps />
-          <div className='mt-8'>
-            <Link href='/ielts'>
-              <Button>Start with IELTS Readiness →</Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Storyboard Section */}
-      <section className='py-12 bg-gray-50'>
-        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
-          <h2 className='text-2xl font-bold text-center mb-8'>
-            See the journey before you start it
-          </h2>
-          <p className='text-center text-gray-600 mb-6'>
-            Here's what success looks like when every stakeholder is aligned.
-          </p>
-          <Storyboard />
-        </div>
-      </section>
-
-      {/* Pathway Cards */}
-      <section className='py-12 bg-white'>
-        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
-          <PathwayCards />
-        </div>
-      </section>
-
-      {/* Channel Partner Teaser */}
-      <section className='py-12 bg-gray-50'>
-        <div className='max-w-4xl mx-auto px-4 sm:px-6 lg:px-8'>
-          <ChannelPartnerTeaser />
-        </div>
-      </section>
+      <Footer />
     </div>
   )
 }
