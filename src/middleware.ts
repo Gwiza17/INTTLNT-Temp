@@ -38,9 +38,13 @@ async function linkAndGetStakeholder(userId: string, email: string | null) {
 
 export async function middleware(request: NextRequest) {
   const { supabase, response } = createClient(request)
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  let user = null
+  try {
+    const { data } = await supabase.auth.getUser()
+    user = data.user
+  } catch {
+    // Supabase unavailable (e.g. missing/placeholder env vars) — treat as unauthenticated
+  }
 
   const url = request.nextUrl.clone()
   const path = url.pathname
