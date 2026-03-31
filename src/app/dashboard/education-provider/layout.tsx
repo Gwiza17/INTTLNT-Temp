@@ -23,6 +23,12 @@ export default function EducationProviderLayout({
               My Cohorts
             </Link>
             <Link
+              href='/dashboard/education-provider/cohorts'
+              className='block py-2 px-4 rounded hover:bg-white/10'
+            >
+              Cohort Marketplace
+            </Link>
+            <Link
               href='/dashboard/education-provider/analytics'
               className='block py-2 px-4 rounded hover:bg-white/10'
             >

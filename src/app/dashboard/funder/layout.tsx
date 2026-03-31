@@ -19,6 +19,12 @@ export default function FunderLayout({ children }: FunderLayoutProps) {
               Assigned Cases
             </Link>
             <Link
+              href='/dashboard/funder/cohorts'
+              className='block py-2 px-4 rounded hover:bg-white/10'
+            >
+              Cohort Marketplace
+            </Link>
+            <Link
               href='/dashboard/funder/analytics'
               className='block py-2 px-4 rounded hover:bg-white/10'
             >

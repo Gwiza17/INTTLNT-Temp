@@ -18,6 +18,12 @@ export default function EmployerLayout({ children }: EmployerLayoutProps) {
             >
               Candidate Pool Analytics
             </Link>
+            <Link
+              href='/dashboard/employer/cohorts'
+              className='block py-2 px-4 rounded hover:bg-white/10'
+            >
+              Talent Pipeline
+            </Link>
           </nav>
         </aside>
         <main className='flex-1 p-8'>{children}</main>

@@ -69,6 +69,7 @@ export async function middleware(request: NextRequest) {
     '/terms',
     '/contact',
     '/livepathways',
+    '/marketplace',
   ]
 
   const isPublic = publicRoutes.some((route) =>
