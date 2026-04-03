@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import type { ExpressInterestPayload } from '@/types/marketplace'
+import { sendInterestNotification } from '@/lib/utils/notifications'
 
 // POST /api/marketplace/interest
 // Authenticated stakeholder expresses interest in an anonymous candidate
@@ -59,6 +60,49 @@ export async function POST(request: NextRequest) {
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  // Send email notification to candidate (async, don't wait)
+  try {
+    // Get full stakeholder info and candidate details for notification
+    const { data: fullStakeholder } = await supabase
+      .from('stakeholders')
+      .select('name, org')
+      .eq('id', stakeholder.id)
+      .single()
+
+    const { data: candidateData } = await supabase
+      .from('candidate_marketplace_profiles')
+      .select(`
+        candidate_ref, discipline,
+        cohorts (name),
+        applicants (full_name, email)
+      `)
+      .eq('id', candidate_profile_id)
+      .single()
+
+    if (fullStakeholder && candidateData && candidateData.applicants) {
+      const applicant = candidateData.applicants as any
+      const cohort = candidateData.cohorts as any
+      
+      // Send notification asynchronously (don't block the response)
+      sendInterestNotification({
+        candidateEmail: applicant.email,
+        candidateName: applicant.full_name,
+        stakeholderName: fullStakeholder.name,
+        stakeholderOrg: fullStakeholder.org || fullStakeholder.name,
+        cohortName: cohort?.name || 'Unknown Cohort',
+        discipline: candidateData.discipline,
+        stakeholderNote: stakeholder_note || undefined,
+        candidateRef: candidateData.candidate_ref,
+      }).catch(emailError => {
+        console.error('Failed to send interest notification email:', emailError)
+        // Don't fail the API call if email fails
+      })
+    }
+  } catch (notificationError) {
+    console.error('Error preparing interest notification:', notificationError)
+    // Don't fail the API call if notification preparation fails
   }
 
   return NextResponse.json({ interest }, { status: 201 })

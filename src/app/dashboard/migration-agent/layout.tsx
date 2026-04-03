@@ -21,12 +21,6 @@ export default function MigrationAgentLayout({
               My Cases
             </Link>
             <Link
-              href='/dashboard/migration-agent/cohorts'
-              className='block py-2 px-4 rounded hover:bg-white/10'
-            >
-              Cohort Marketplace
-            </Link>
-            <Link
               href='/dashboard/migration-agent/analytics'
               className='block py-2 px-4 rounded hover:bg-white/10'
             >

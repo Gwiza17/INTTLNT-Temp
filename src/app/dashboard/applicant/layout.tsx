@@ -19,12 +19,6 @@ export default function ApplicantLayout({ children }: ApplicantLayoutProps) {
             >
               Overview
             </Link>
-            <Link
-              href='/dashboard/applicant/interests'
-              className='block py-2 px-4 rounded hover:bg-white/10'
-            >
-              Stakeholder Interest
-            </Link>
           </nav>
           <div className='pt-6 border-t border-white/10'>
             <SignOutButton />

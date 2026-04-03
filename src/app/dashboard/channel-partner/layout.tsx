@@ -38,12 +38,6 @@ export default function PartnerLayout({ children }: PartnerLayoutProps) {
               Generate Links
             </Link>
             <Link
-              href='/dashboard/channel-partner/cohorts'
-              className='block py-2 px-4 rounded hover:bg-white/10'
-            >
-              Cohort Marketplace
-            </Link>
-            <Link
               href='/dashboard/channel-partner/analytics'
               className='block py-2 px-4 rounded hover:bg-white/10'
             >

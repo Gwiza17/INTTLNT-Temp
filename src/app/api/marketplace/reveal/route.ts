@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import type { ResolveRevealPayload } from '@/types/marketplace'
+import { sendRevealNotification } from '@/lib/utils/notifications'
 
 // POST /api/marketplace/reveal
 // Candidate approves or declines a stakeholder's reveal request
@@ -56,6 +57,61 @@ export async function POST(request: NextRequest) {
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  // Send email notification to stakeholder (async, don't wait)
+  try {
+    // Get full data for notification
+    const { data: notificationData } = await supabase
+      .from('marketplace_interest')
+      .select(`
+        stakeholder_id,
+        candidate_marketplace_profiles (
+          candidate_ref, discipline,
+          cohorts (name),
+          applicants (full_name, email, whatsapp)
+        ),
+        stakeholders (
+          name, org, email,
+          user_id,
+          users:user_id (email)
+        )
+      `)
+      .eq('id', interest_id)
+      .single()
+
+    if (notificationData) {
+      const candidate = notificationData.candidate_marketplace_profiles as any
+      const stakeholder = notificationData.stakeholders as any
+      const applicant = candidate?.applicants
+      const cohort = candidate?.cohorts
+      
+      // Get stakeholder email (either from stakeholder table or auth.users)
+      const stakeholderEmail = stakeholder?.email || stakeholder?.users?.email
+
+      if (stakeholderEmail && applicant && cohort) {
+        // Send notification asynchronously
+        sendRevealNotification({
+          stakeholderEmail,
+          stakeholderName: stakeholder.name,
+          candidateRef: candidate.candidate_ref,
+          cohortName: cohort.name,
+          status: action as 'approved' | 'declined',
+          // Only include contact info if approved
+          ...(action === 'approved' ? {
+            candidateName: applicant.full_name,
+            candidateEmail: applicant.email,
+            candidatePhone: applicant.whatsapp,
+          } : {}),
+        }).catch(emailError => {
+          console.error('Failed to send reveal notification email:', emailError)
+          // Don't fail the API call if email fails
+        })
+      }
+    }
+  } catch (notificationError) {
+    console.error('Error preparing reveal notification:', notificationError)
+    // Don't fail the API call if notification preparation fails
   }
 
   return NextResponse.json({ interest: updated })
